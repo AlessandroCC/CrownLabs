@@ -17,7 +17,6 @@ Minimal proposed schema for frontend codegen to support `spec.cleanup`.
 This is a stub used only for local code generation and should be adapted
 to the real server schema before deploying the server.
 """
-
 scalar JSON
 
 # Cleanup nested spec
@@ -166,5 +165,8 @@ type Query {
 }
 
 type Mutation {
-  createCrownlabsPolitoItV1alpha2NamespacedTemplate(namespace: String, itPolitoCrownlabsV1alpha2TemplateInput: TemplateInput): Template
+  createCrownlabsPolitoItV1alpha2NamespacedTemplate(
+    namespace: String
+    itPolitoCrownlabsV1alpha2TemplateInput: TemplateInput
+  ): Template
 }

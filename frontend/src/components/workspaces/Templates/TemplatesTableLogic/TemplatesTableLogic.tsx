@@ -273,7 +273,11 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
           value: environmentList,
         },
         { op: 'replace', path: '/spec/prettyName', value: t.name },
-        { op: 'replace', path: '/spec/cleanup/deleteAfterCreation', value: t.deleteAfter },
+        {
+          op: 'replace',
+          path: '/spec/cleanup/deleteAfterCreation',
+          value: t.deleteAfter,
+        },
         {
           op: 'replace',
           path: '/spec/cleanup/stopAfterInactivity',
@@ -381,10 +385,16 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
                     // Include nodeSelector for modal initialization (state setup), but it won't be in the form
                     nodeSelector: template.nodeSelector,
                     description: template.description ?? template.name,
-                    deleteAfter: template.cleanup?.deleteAfterCreation ?? template.deleteAfter,
+                    deleteAfter:
+                      template.cleanup?.deleteAfterCreation ??
+                      template.deleteAfter,
                     allowPublicExposure: template.allowPublicExposure,
-                    inactivityTimeout: template.cleanup?.stopAfterInactivity ?? template.inactivityTimeout,
-                    destroyAfterInactivity: template.cleanup?.deleteAfterInactivity ?? template.destroyAfterInactivity,
+                    inactivityTimeout:
+                      template.cleanup?.stopAfterInactivity ??
+                      template.inactivityTimeout,
+                    destroyAfterInactivity:
+                      template.cleanup?.deleteAfterInactivity ??
+                      template.destroyAfterInactivity,
                     environments: template.environmentList.map(env => ({
                       name: env.name,
                       persistent: env.persistent,
