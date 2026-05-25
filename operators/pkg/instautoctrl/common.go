@@ -253,12 +253,12 @@ var deleteAfterChanged = predicate.Funcs{
 			return false
 		}
 
-		oldValue := oldTemplate.Spec.DeleteAfter
-		newValue := newTemplate.Spec.DeleteAfter
-		log.Info("template %s/%s: old deleteAfter=%s, new deleteAfter=%s",
+		oldValue := oldTemplate.Spec.Cleanup.DeleteAfterCreation
+		newValue := newTemplate.Spec.Cleanup.DeleteAfterCreation
+		log.Info("template %s/%s: old deleteAfterCreation=%s, new deleteAfterCreation=%s",
 			oldTemplate.Namespace, oldTemplate.Name, oldValue, newValue)
 
-		// Requeue only if the deleteAfter field has changed and is not set to "never"
+		// Requeue only if the deleteAfterCreation field has changed and is not set to "never"
 		return newValue != NeverTimeoutValue
 	},
 }
@@ -273,19 +273,19 @@ var inactivityTimeoutChanged = predicate.Funcs{
 			return false
 		}
 
-		oldValue := oldTemplate.Spec.InactivityTimeout
-		newValue := newTemplate.Spec.InactivityTimeout
-		log.Info("template %s/%s: old inactivityTimeout=%s, new inactivityTimeout=%s",
+		oldValue := oldTemplate.Spec.Cleanup.StopAfterInactivity
+		newValue := newTemplate.Spec.Cleanup.StopAfterInactivity
+		log.Info("template %s/%s: old stopAfterInactivity=%s, new stopAfterInactivity=%s",
 			oldTemplate.Namespace, oldTemplate.Name, oldValue, newValue)
 
-		// Requeue only if the inactivity destruction time field has changed and it is not set to "never"
+		// Requeue only if the inactivity stopping time field has changed and it is not set to "never"
 		if newValue != NeverTimeoutValue {
 			return true
 		}
 
 		// Requeue also if the powered off destruction time field has changed
-		oldPoweredOffValue := oldTemplate.Spec.DestroyAfterInactivity
-		newPoweredOffValue := newTemplate.Spec.DestroyAfterInactivity
+		oldPoweredOffValue := oldTemplate.Spec.Cleanup.DeleteAfterInactivity
+		newPoweredOffValue := newTemplate.Spec.Cleanup.DeleteAfterInactivity
 		if oldPoweredOffValue != newPoweredOffValue && newPoweredOffValue != NeverTimeoutValue {
 			return true
 		}

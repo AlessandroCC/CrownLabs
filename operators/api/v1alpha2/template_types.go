@@ -48,6 +48,31 @@ const (
 	ScopeExercise EnvironmentScope = "Exercise"
 )
 
+// CleanupSpec groups the lifecycle-related cleanup settings for a Template.
+type CleanupSpec struct {
+	// +kubebuilder:validation:Pattern="^(never|[0-9]+[smhd])$"
+	// +kubebuilder:default="never"
+
+	// The maximum lifetime of an Instance referencing the current Template.
+	// Once this period is expired, the Instance may be automatically deleted
+	// or stopped to save resources. If set to "never", the instance will not be
+	// automatically terminated.
+	DeleteAfterCreation string `json:"deleteAfterCreation,omitempty"`
+
+	// +kubebuilder:validation:Pattern="^(never|[0-9]+[smhd])$"
+	// +kubebuilder:default="never"
+	// The maximum period of inactivity after which an Instance referencing
+	// the current Template will be automatically stopped or deleted to
+	// save resources.
+	StopAfterInactivity string `json:"stopAfterInactivity,omitempty"`
+
+	// +kubebuilder:validation:Pattern="^(never|[0-9]+[smhd])$"
+	// +kubebuilder:default="never"
+	// The maximum period of time a persistent instance can remain powered off
+	// after being stopped for inactivity, before being completely deleted.
+	DeleteAfterInactivity string `json:"deleteAfterInactivity,omitempty"`
+}
+
 // TemplateSpec is the specification of the desired state of the Template.
 type TemplateSpec struct {
 	// The human-readable name of the Template.
@@ -65,14 +90,8 @@ type TemplateSpec struct {
 	// +listMapKey=name
 	EnvironmentList []Environment `json:"environmentList"`
 
-	// +kubebuilder:validation:Pattern="^(never|[0-9]+[smhd])$"
-	// +kubebuilder:default="never"
-
-	// The maximum lifetime of an Instance referencing the current Template.
-	// Once this period is expired, the Instance may be automatically deleted
-	// or stopped to save resources. If set to "never", the instance will not be
-	// automatically terminated.
-	DeleteAfter string `json:"deleteAfter,omitempty"`
+	// Cleanup groups the lifecycle-related cleanup settings for the Template.
+	Cleanup CleanupSpec `json:"cleanup,omitempty"`
 
 	// Labels that are used for the selection of the node.
 	// They are given by means of a pointer to check the presence of the field.
@@ -88,18 +107,6 @@ type TemplateSpec struct {
 	// Whether the Template has the authorization to be Public Exposed or not, using a LoadBalancer service.
 	AllowPublicExposure bool `json:"allowPublicExposure,omitempty"`
 
-	// +kubebuilder:validation:Pattern="^(never|[0-9]+[smhd])$"
-	// +kubebuilder:default="never"
-	// The maximum period of inactivity after which an Instance referencing
-	// the current Template will be automatically stopped or deleted to
-	// save resources.
-	InactivityTimeout string `json:"inactivityTimeout,omitempty"`
-
-	// +kubebuilder:validation:Pattern="^(never|[0-9]+[smhd])$"
-	// +kubebuilder:default="never"
-	// The maximum period of time a persistent instance can remain powered off
-	// after being stopped for inactivity, before being completely deleted.
-	DestroyAfterInactivity string `json:"destroyAfterInactivity,omitempty"`
 }
 
 // TemplateStatus reflects the most recently observed status of the Template.

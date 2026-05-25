@@ -66,7 +66,7 @@ func (r *InstanceExpirationReconciler) SetupWithManager(mgr ctrl.Manager, concur
 		For(&clv1alpha2.Instance{}, builder.WithPredicates(instanceTriggered)).
 		Watches(
 			&clv1alpha2.Template{},
-			createTemplateWatchHandlerWithTimeout(r.Client, func(t *clv1alpha2.Template) string { return t.Spec.DeleteAfter }),
+			createTemplateWatchHandlerWithTimeout(r.Client, func(t *clv1alpha2.Template) string { return t.Spec.Cleanup.DeleteAfterCreation }),
 			builder.WithPredicates(deleteAfterChanged),
 		).
 		Watches(&corev1.Namespace{},
@@ -108,14 +108,14 @@ func (r *InstanceExpirationReconciler) Reconcile(ctx context.Context, req ctrl.R
 	}
 	tracer.Step("instance, template and tenant retrieved")
 
-	// Get lifespan from template's deleteAfter field
-	deleteAfter := template.Spec.DeleteAfter
+	// Get lifespan from template's deleteAfterCreation field
+	deleteAfter := template.Spec.Cleanup.DeleteAfterCreation
 
 	ctx, _ = pkgcontext.TemplateInto(ctx, template)
 	ctx, _ = pkgcontext.InstanceInto(ctx, instance)
 	ctx, _ = pkgcontext.TenantInto(ctx, tenant)
 
-	// If the template's deleteAfter field is set to neverTimeoutValue , never delete
+	// If the template's deleteAfterCreation field is set to neverTimeoutValue, never delete
 	if deleteAfter == NeverTimeoutValue {
 		dbgLog.Info("Instance marked as never expiring", "instance", instance.GetName(), "namespace", instance.GetNamespace())
 		return ctrl.Result{}, nil

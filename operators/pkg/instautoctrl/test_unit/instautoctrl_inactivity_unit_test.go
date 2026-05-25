@@ -121,8 +121,10 @@ var _ = Describe("Instautoctrl inactivity unit test", func() {
 					Image:           "crownlabs/vm",
 				},
 			},
-			DeleteAfter:       CustomDeleteAfterNonPersistent,
-			InactivityTimeout: CustomInactivityTimeoutNonPersistent,
+			Cleanup: crownlabsv1alpha2.CleanupSpec{
+				DeleteAfterCreation: CustomDeleteAfterNonPersistent,
+				StopAfterInactivity: CustomInactivityTimeoutNonPersistent,
+			},
 		}
 		templatePersistentEnvironmentWithCustomInactivityTimeout = crownlabsv1alpha2.TemplateSpec{
 			WorkspaceRef: crownlabsv1alpha2.GenericRef{},
@@ -142,8 +144,10 @@ var _ = Describe("Instautoctrl inactivity unit test", func() {
 					Image:           "crownlabs/vm",
 				},
 			},
-			DeleteAfter:       CustomDeleteAfterPersistent2,
-			InactivityTimeout: CustomInactivityTimeoutPersistent2,
+			Cleanup: crownlabsv1alpha2.CleanupSpec{
+				DeleteAfterCreation: CustomDeleteAfterPersistent2,
+				StopAfterInactivity: CustomInactivityTimeoutPersistent2,
+			},
 		}
 		persistentTemplate2 = crownlabsv1alpha2.Template{
 			TypeMeta: metav1.TypeMeta{},
@@ -583,7 +587,7 @@ var _ = Describe("Instautoctrl inactivity unit test", func() {
 		})
 
 		It("should return false if destroyAfterInactivity is NeverTimeoutValue", func() {
-			currentTemplate.Spec.DestroyAfterInactivity = instautoctrl.NeverTimeoutValue
+			currentTemplate.Spec.Cleanup.DeleteAfterInactivity = instautoctrl.NeverTimeoutValue
 
 			remaining, isActive, err := r.GetRemainingInactivityDestructionTime(ctx, currentInstance)
 			Expect(err).ToNot(HaveOccurred())
@@ -592,7 +596,7 @@ var _ = Describe("Instautoctrl inactivity unit test", func() {
 		})
 
 		It("should return remaining time if destroy timer is set but not exceeded", func() {
-			currentTemplate.Spec.DestroyAfterInactivity = "10d"
+			currentTemplate.Spec.Cleanup.DeleteAfterInactivity = "10d"
 			poweredOffTime := time.Now().Add(-5 * 24 * time.Hour).Format(time.RFC3339)
 			currentInstance.Annotations[forge.LastPoweredOffTimestampAnnotation] = poweredOffTime
 
@@ -603,7 +607,7 @@ var _ = Describe("Instautoctrl inactivity unit test", func() {
 		})
 
 		It("should return <= 0 if destroy timer has been exceeded", func() {
-			currentTemplate.Spec.DestroyAfterInactivity = "10d"
+			currentTemplate.Spec.Cleanup.DeleteAfterInactivity = "10d"
 			poweredOffTime := time.Now().Add(-15 * 24 * time.Hour).Format(time.RFC3339)
 			currentInstance.Annotations[forge.LastPoweredOffTimestampAnnotation] = poweredOffTime
 
@@ -614,7 +618,7 @@ var _ = Describe("Instautoctrl inactivity unit test", func() {
 		})
 
 		It("should return false if LastPoweredOffTimestampAnnotation is empty", func() {
-			currentTemplate.Spec.DestroyAfterInactivity = "10d"
+			currentTemplate.Spec.Cleanup.DeleteAfterInactivity = "10d"
 			currentInstance.Annotations[forge.LastPoweredOffTimestampAnnotation] = ""
 
 			remaining, isActive, err := r.GetRemainingInactivityDestructionTime(ctx, currentInstance)

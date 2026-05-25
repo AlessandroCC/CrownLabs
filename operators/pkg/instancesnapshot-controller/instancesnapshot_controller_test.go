@@ -76,8 +76,7 @@ var _ = Describe("InstancesnapshotController", func() {
 					Image:           "crownlabs/vm",
 				},
 			},
-			DeleteAfter:       "",
-			InactivityTimeout: "",
+			Cleanup: crownlabsv1alpha2.CleanupSpec{},
 		}
 		template = crownlabsv1alpha2.Template{
 			TypeMeta: metav1.TypeMeta{},

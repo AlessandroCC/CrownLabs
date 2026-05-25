@@ -154,8 +154,8 @@ You can find the full documentation [here](/operators/pkg/instautoctrl/README.md
 #### Instance Inactive Termination controller
 
 This controller periodically checks running Instances to determine if they are still in use or can be terminated because of inactivity.
-Each **Template** resource associated with an Instance defines an `InactivityTimeout` field, which represents the period of inactivity after which the Instance is considered unused.
-If omitted, this field is automatically added in the Template resource with a `never` value set by default, meaning that Instances created from that template will be ignored by this controller.
+Each **Template** resource associated with an Instance defines `spec.cleanup.stopAfterInactivity` (previously `InactivityTimeout`), which represents the period of inactivity after which the Instance is considered unused.
+If omitted, this field defaults to `never`, meaning that Instances created from that template will be ignored by this controller.
 
 To evaluate whether an Instance is active, the controller relies on **Prometheus** metrics.
 It verifies whether the tenant has accessed the Instance recently, either through the frontend (by analyzing Ingress metrics) or via SSH (using a specific SSH bastion tracker metric).
@@ -170,8 +170,8 @@ In addition, the behavior can be customized using annotations. For example, the 
 
 #### Instance Expiration controller
 While the Instance Inactive Termination Controller deletes Instances when these are not used for an extended period of time, this controller (_Instance Expiration Controller_) introduces an orthogonal feature, i.e., the capability to delete an Instance when its maximum lifespan has expired, no matter if the instance has been used or not.
-Each Template defines a `DeleteAfter` field that specifies how long an Instance can exist before it must be removed. When an Instance reaches this limit, the controller automatically deletes it.
-Analogously to the Instance Inactive Termination Controller, omitting the `DeleteAfter` field means it is automatically set to `never` by default, meaning that Instances created from that template will be ignored by this controller.
+Each Template defines `spec.cleanup.deleteAfterCreation` (previously `DeleteAfter`) that specifies how long an Instance can exist before it must be removed. When an Instance reaches this limit, the controller automatically deletes it.
+Omitting this field defaults it to `never`, meaning that Instances created from that template will be ignored by this controller.
 As with inactivity termination, this feature can be managed through Helm chart parameters: `enableInstanceExpiration` controls whether the controller is active, while `enableExpirationNotifications` enables or disables email alerts to inform tenants before deletion.
 This feature can be used when we know already that an Instance will not be needed after a given period; a possible example is the instance used to carry out an exam, which can be safely deleted when the exam has finished.
 The `crownlabs.polito.it/expiration-ignore` annotation, when set to `True`, allows to ignore all Instances in a Namespace, preventing them from being deleted due to expiration.

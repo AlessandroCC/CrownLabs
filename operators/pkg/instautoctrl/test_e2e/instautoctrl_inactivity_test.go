@@ -116,8 +116,10 @@ var _ = Describe("Instautoctrl-inactivity", func() {
 					Image:           "crownlabs/vm",
 				},
 			},
-			DeleteAfter:       CustomDeleteAfterNonPersistent,
-			InactivityTimeout: CustomInactivityTimeoutNonPersistent,
+			Cleanup: crownlabsv1alpha2.CleanupSpec{
+				DeleteAfterCreation: CustomDeleteAfterNonPersistent,
+				StopAfterInactivity: CustomInactivityTimeoutNonPersistent,
+			},
 		}
 		templatePersistentEnvironmentWithCustomInactivityTimeout = crownlabsv1alpha2.TemplateSpec{
 			WorkspaceRef: crownlabsv1alpha2.GenericRef{},
@@ -137,8 +139,10 @@ var _ = Describe("Instautoctrl-inactivity", func() {
 					Image:           "crownlabs/vm",
 				},
 			},
-			DeleteAfter:       CustomDeleteAfterPersistent2,
-			InactivityTimeout: CustomInactivityTimeoutPersistent2,
+			Cleanup: crownlabsv1alpha2.CleanupSpec{
+				DeleteAfterCreation: CustomDeleteAfterPersistent2,
+				StopAfterInactivity: CustomInactivityTimeoutPersistent2,
+			},
 		}
 		persistentTemplate2 = crownlabsv1alpha2.Template{
 			TypeMeta: metav1.TypeMeta{},
@@ -387,7 +391,7 @@ var _ = Describe("Instautoctrl-inactivity", func() {
 			doesEventuallyExists(ctx, templateLookupKey, currentTemplate, BeTrue(), timeout, interval, k8sClient)
 
 			By("Checking the InactivityTimeout field is the default one")
-			currentInactivityTimeout := currentTemplate.Spec.InactivityTimeout
+			currentInactivityTimeout := currentTemplate.Spec.Cleanup.StopAfterInactivity
 			defaultInactivityTimeout := instautoctrl.NeverTimeoutValue
 			Expect(currentInactivityTimeout).To(Equal(defaultInactivityTimeout))
 			Eventually(func() bool {
@@ -532,7 +536,7 @@ var _ = Describe("Instautoctrl-inactivity", func() {
 				if err := k8sClient.Get(ctx, templateLookupKey, currentTemplate); err != nil {
 					return err
 				}
-				currentTemplate.Spec.DestroyAfterInactivity = "100h"
+				currentTemplate.Spec.Cleanup.DeleteAfterInactivity = "100h"
 				return k8sClient.Update(ctx, currentTemplate)
 			}, timeout, interval).Should(Succeed())
 
@@ -566,7 +570,7 @@ var _ = Describe("Instautoctrl-inactivity", func() {
 				if err := k8sClient.Get(ctx, templateLookupKey, currentTemplate); err != nil {
 					return err
 				}
-				currentTemplate.Spec.DestroyAfterInactivity = "100h"
+				currentTemplate.Spec.Cleanup.DeleteAfterInactivity = "100h"
 				return k8sClient.Update(ctx, currentTemplate)
 			}, timeout, interval).Should(Succeed())
 

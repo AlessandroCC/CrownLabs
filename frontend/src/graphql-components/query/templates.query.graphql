@@ -7,9 +7,11 @@ query workspaceTemplates($workspaceNamespace: String!) {
         prettyName
         description
         allowPublicExposure
-        deleteAfter
-        inactivityTimeout
-        destroyAfterInactivity
+        cleanup {
+          deleteAfterCreation
+          stopAfterInactivity
+          deleteAfterInactivity
+        }
         nodeSelector
         environmentList {
           name
@@ -20,7 +22,7 @@ query workspaceTemplates($workspaceNamespace: String!) {
           disableControls
           rewriteURL
           persistent
-          containerStartupOptions{
+          containerStartupOptions {
             sourceArchiveURL
             contentPath
             startupArgs

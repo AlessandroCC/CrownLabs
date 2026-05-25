@@ -234,9 +234,20 @@ const ModalCreateTemplate: FC<IModalCreateTemplateProps> = ({ ...props }) => {
       ...template,
       allowPublicExposure: isPublicExposureEnabled,
       description: template.description || template.name,
-      inactivityTimeout: timeouts.inactivityTimeout.value === 0 ? 'never' : `${timeouts.inactivityTimeout.value}${timeouts.inactivityTimeout.unit}`,
-      destroyAfterInactivity: timeouts.destroyAfterInactivity.value === 0 ? 'never' : `${timeouts.destroyAfterInactivity.value}${timeouts.destroyAfterInactivity.unit}`,
-      deleteAfter: timeouts.deleteAfter.value === 0 ? 'never' : `${timeouts.deleteAfter.value}${timeouts.deleteAfter.unit}`,
+      cleanup: {
+        deleteAfterCreation:
+          timeouts.deleteAfter.value === 0
+            ? 'never'
+            : `${timeouts.deleteAfter.value}${timeouts.deleteAfter.unit}`,
+        stopAfterInactivity:
+          timeouts.inactivityTimeout.value === 0
+            ? 'never'
+            : `${timeouts.inactivityTimeout.value}${timeouts.inactivityTimeout.unit}`,
+        deleteAfterInactivity:
+          timeouts.destroyAfterInactivity.value === 0
+            ? 'never'
+            : `${timeouts.destroyAfterInactivity.value}${timeouts.destroyAfterInactivity.unit}`,
+      },
       environments: template.environments.map(env => ({
         ...env,
         image: parseImage(env.environmentType, env.image),
@@ -281,9 +292,9 @@ const ModalCreateTemplate: FC<IModalCreateTemplateProps> = ({ ...props }) => {
 
   const [timeouts, setTimeouts] = useState(
     {
-    inactivityTimeout: { value: parseTimeoutString(template?.inactivityTimeout).value ?? 0, unit: parseTimeoutString(template?.inactivityTimeout).unit ?? '' },
-    destroyAfterInactivity: { value: parseTimeoutString(template?.destroyAfterInactivity).value ?? 0, unit: parseTimeoutString(template?.destroyAfterInactivity).unit ?? '' },
-    deleteAfter: { value: parseTimeoutString(template?.deleteAfter).value ?? 0, unit: parseTimeoutString(template?.deleteAfter).unit ?? '' },
+    inactivityTimeout: { value: parseTimeoutString(template?.cleanup?.stopAfterInactivity).value ?? 0, unit: parseTimeoutString(template?.cleanup?.stopAfterInactivity).unit ?? '' },
+    destroyAfterInactivity: { value: parseTimeoutString(template?.cleanup?.deleteAfterInactivity).value ?? 0, unit: parseTimeoutString(template?.cleanup?.deleteAfterInactivity).unit ?? '' },
+    deleteAfter: { value: parseTimeoutString(template?.cleanup?.deleteAfterCreation).value ?? 0, unit: parseTimeoutString(template?.cleanup?.deleteAfterCreation).unit ?? '' },
   });
 
     const {
@@ -303,14 +314,14 @@ const ModalCreateTemplate: FC<IModalCreateTemplateProps> = ({ ...props }) => {
     const initial = getInitialValues(template);
     form.setFieldsValue(initial);
     setTimeouts({
-      inactivityTimeout: parseTimeoutString(initial.inactivityTimeout),
-      destroyAfterInactivity: parseTimeoutString(initial.destroyAfterInactivity),
-      deleteAfter: parseTimeoutString(initial.deleteAfter),
+      inactivityTimeout: parseTimeoutString(initial.cleanup?.stopAfterInactivity),
+      destroyAfterInactivity: parseTimeoutString(initial.cleanup?.deleteAfterInactivity),
+      deleteAfter: parseTimeoutString(initial.cleanup?.deleteAfterCreation),
     });
     setAutomaticStoppingEnabled(
-      (initial.inactivityTimeout) !== 'never' ||
-        (initial.destroyAfterInactivity) !== 'never' ||
-        (initial.deleteAfter) !== 'never',
+      (initial.cleanup?.stopAfterInactivity) !== 'never' ||
+        (initial.cleanup?.deleteAfterInactivity) !== 'never' ||
+        (initial.cleanup?.deleteAfterCreation) !== 'never',
     );
     setIsPublicExposureEnabled(initial.allowPublicExposure ?? false);
       // Set node selector mode and labels based on template
@@ -569,7 +580,7 @@ const handleNodeSelectorModeChange = useCallback((value: string) => {
               disabled={isTimeUnitDisabled('inactivityTimeout') || !automaticStoppingEnabled}
               placeholder="Select Time unit"
               getPopupContainer={trigger => trigger.parentElement || document.body}
-              defaultValue={parseTimeoutString(template?.inactivityTimeout).unit}
+              defaultValue={parseTimeoutString(template?.cleanup?.stopAfterInactivity).unit}
               
             >
               {TimeUnitOptions.map(option => (
@@ -607,7 +618,7 @@ const handleNodeSelectorModeChange = useCallback((value: string) => {
               disabled={isTimeUnitDisabled('destroyAfterInactivity') || !automaticStoppingEnabled}
               placeholder="Select Time unit"
               getPopupContainer={trigger => trigger.parentElement || document.body}
-              defaultValue={parseTimeoutString(template?.destroyAfterInactivity).unit}
+              defaultValue={parseTimeoutString(template?.cleanup?.deleteAfterInactivity).unit}
             >
               {TimeUnitOptions.map(option => (
                 <Select.Option key={option.value} value={option.value}>
@@ -646,7 +657,7 @@ const handleNodeSelectorModeChange = useCallback((value: string) => {
             disabled={isTimeUnitDisabled('deleteAfter') || !automaticStoppingEnabled}
             placeholder="Select Time unit"
             getPopupContainer={trigger => trigger.parentElement || document.body}
-            defaultValue={parseTimeoutString(template?.deleteAfter).unit}
+            defaultValue={parseTimeoutString(template?.cleanup?.deleteAfterCreation).unit}
           >
             {TimeUnitOptions.map(option => (
               <Select.Option key={option.value} value={option.value}>

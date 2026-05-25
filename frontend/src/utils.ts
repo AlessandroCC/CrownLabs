@@ -75,9 +75,11 @@ export type Template = {
   allowPublicExposure: boolean;
   environmentList: Array<TemplateEnvironment>;
   hasMultipleEnvironments: boolean;
-  deleteAfter: string;
-  inactivityTimeout: string;
-  destroyAfterInactivity: string;
+  cleanup?: {
+    deleteAfterCreation?: string;
+    stopAfterInactivity?: string;
+    deleteAfterInactivity?: string;
+  };
 };
 
 export type Instance = {

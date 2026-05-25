@@ -78,7 +78,6 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
   });
 
   const dataTemplate = useMemo(() => {
-
     const templates =
       templateListData?.templateList?.templates
         ?.map(t =>
@@ -199,7 +198,6 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
   const templates = useMemo(() => {
     const joined = joinInstancesAndTemplates(dataTemplate, ownedInstances);
 
-
     // build map of original GraphQL templates by metadata.name for reliable lookup
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const originalById = new Map<string, any>();
@@ -221,7 +219,6 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
     });
   }, [dataTemplate, ownedInstances, templateListData?.templateList?.templates]);
 
-
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<TemplateForm>();
 
@@ -229,7 +226,7 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
     onError: apolloErrorCatcher,
   });
 
-  const [usedTemplate, setUsedTemplate] = useState<Template | null>(null)
+  const [usedTemplate, setUsedTemplate] = useState<Template | null>(null);
 
   const submitPatchHandler = async (t: TemplateForm) => {
     try {
@@ -243,8 +240,7 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
           persistent: env.persistent,
           environmentType: env.environmentType,
           resources: {
-            reservedCPUPercentage:
-              env.reservedCpu,
+            reservedCPUPercentage: env.reservedCpu,
             cpu: env.cpu,
             memory: `${env.ram}Gi`,
             disk: env.disk ? `${env.disk}Gi` : undefined,
@@ -271,30 +267,30 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
         | { op: 'replace' | 'add'; path: string; value: unknown }
         | { op: 'remove'; path: string }
       > = [
-          {
-            op: 'replace',
-            path: '/spec/environmentList',
-            value: environmentList,
-          },
-          { op: 'replace', path: '/spec/prettyName', value: t.name },
-          { op: 'replace', path: '/spec/deleteAfter', value: t.deleteAfter },
-          {
-            op: 'replace',
-            path: '/spec/inactivityTimeout',
-            value: t.inactivityTimeout,
-          },
-          {
-            op: 'replace',
-            path: '/spec/destroyAfterInactivity',
-            value: t.destroyAfterInactivity,
-          },
-          {
-            op: 'replace',
-            path: '/spec/allowPublicExposure',
-            value: t.allowPublicExposure,
-          },
-          { op: 'replace', path: '/spec/description', value: t.description },
-        ];
+        {
+          op: 'replace',
+          path: '/spec/environmentList',
+          value: environmentList,
+        },
+        { op: 'replace', path: '/spec/prettyName', value: t.name },
+        { op: 'replace', path: '/spec/cleanup/deleteAfterCreation', value: t.deleteAfter },
+        {
+          op: 'replace',
+          path: '/spec/cleanup/stopAfterInactivity',
+          value: t.inactivityTimeout,
+        },
+        {
+          op: 'replace',
+          path: '/spec/cleanup/deleteAfterInactivity',
+          value: t.destroyAfterInactivity,
+        },
+        {
+          op: 'replace',
+          path: '/spec/allowPublicExposure',
+          value: t.allowPublicExposure,
+        },
+        { op: 'replace', path: '/spec/description', value: t.description },
+      ];
 
       // nodeSelector logic:
       // - if undefined: not touched by user, keep existing value (don't patch)
@@ -303,9 +299,12 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
       if (t.nodeSelector === null && usedTemplate?.nodeSelector !== null) {
         patches.push({ op: 'remove', path: '/spec/nodeSelector' });
       } else if (t.nodeSelector !== null) {
-        patches.push({ op: 'add', path: '/spec/nodeSelector', value: t.nodeSelector });
+        patches.push({
+          op: 'add',
+          path: '/spec/nodeSelector',
+          value: t.nodeSelector,
+        });
       }
-
 
       return await applyTemplateJsonPatchMutation({
         variables: {
@@ -382,10 +381,10 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
                     // Include nodeSelector for modal initialization (state setup), but it won't be in the form
                     nodeSelector: template.nodeSelector,
                     description: template.description ?? template.name,
-                    deleteAfter: template.deleteAfter,
+                    deleteAfter: template.cleanup?.deleteAfterCreation ?? template.deleteAfter,
                     allowPublicExposure: template.allowPublicExposure,
-                    inactivityTimeout: template.inactivityTimeout,
-                    destroyAfterInactivity: template.destroyAfterInactivity,
+                    inactivityTimeout: template.cleanup?.stopAfterInactivity ?? template.inactivityTimeout,
+                    destroyAfterInactivity: template.cleanup?.deleteAfterInactivity ?? template.destroyAfterInactivity,
                     environments: template.environmentList.map(env => ({
                       name: env.name,
                       persistent: env.persistent,
@@ -401,13 +400,17 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
                         : 0,
                       image:
                         env.environmentType === EnvironmentType.VirtualMachine
-                          ? getImageNameNoVer(env.image)
-                            .split('/')
-                            .slice(-2)
-                            .join('/') ?? ''
+                          ? (getImageNameNoVer(env.image)
+                              .split('/')
+                              .slice(-2)
+                              .join('/') ?? '')
                           : env.image,
                       registry:
-                        env.environmentType !== EnvironmentType.CloudVm ? getImageNameNoVer(env.image).split('/').slice(0)[0] ?? '' : '',
+                        env.environmentType !== EnvironmentType.CloudVm
+                          ? (getImageNameNoVer(env.image)
+                              .split('/')
+                              .slice(0)[0] ?? '')
+                          : '',
                       sharedVolumeMounts: env.sharedVolumeMounts.map(svm => ({
                         sharedVolume: svm.name,
                         mountPath: svm.mountPath,

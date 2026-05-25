@@ -71,7 +71,7 @@ func (r *InstanceInactiveTerminationReconciler) SetupWithManager(mgr ctrl.Manage
 			builder.WithPredicates(instanceTriggered)).
 		Watches(
 			&clv1alpha2.Template{},
-			createTemplateWatchHandlerWithTimeout(r.Client, func(t *clv1alpha2.Template) string { return t.Spec.InactivityTimeout }),
+			createTemplateWatchHandlerWithTimeout(r.Client, func(t *clv1alpha2.Template) string { return t.Spec.Cleanup.StopAfterInactivity }),
 			builder.WithPredicates(inactivityTimeoutChanged),
 		).
 		Watches(&corev1.Namespace{},
@@ -134,7 +134,7 @@ func (r *InstanceInactiveTerminationReconciler) Reconcile(ctx context.Context, r
 		return r.handlePoweredOffInstance(ctx, instance, tracer)
 	}
 
-	inactivityTimeout := template.Spec.InactivityTimeout
+	inactivityTimeout := template.Spec.Cleanup.StopAfterInactivity
 	// If set to neverTimeoutValue, return without rescheduling
 	if inactivityTimeout == NeverTimeoutValue {
 		dbgLog.Info("Instance marked as never stop", "name", instance.GetName(), "namespace", instance.GetNamespace())
@@ -572,9 +572,9 @@ func (r *InstanceInactiveTerminationReconciler) SetupInstanceAnnotations(ctx con
 	// Check and set the destroy-after-inactivity annotation from the template
 	template := pkgcontext.TemplateFrom(ctx)
 	if template != nil {
-		if val, ok := instance.Annotations["crownlabs.polito.it/destroy-after-inactivity"]; !ok || val != template.Spec.DestroyAfterInactivity {
-			log.Info("updating destroy-after-inactivity annotation", "annotation", "crownlabs.polito.it/destroy-after-inactivity", "value", template.Spec.DestroyAfterInactivity)
-			instance.Annotations["crownlabs.polito.it/destroy-after-inactivity"] = template.Spec.DestroyAfterInactivity
+		if val, ok := instance.Annotations["crownlabs.polito.it/destroy-after-inactivity"]; !ok || val != template.Spec.Cleanup.DeleteAfterInactivity {
+			log.Info("updating destroy-after-inactivity annotation", "annotation", "crownlabs.polito.it/destroy-after-inactivity", "value", template.Spec.Cleanup.DeleteAfterInactivity)
+			instance.Annotations["crownlabs.polito.it/destroy-after-inactivity"] = template.Spec.Cleanup.DeleteAfterInactivity
 			updated = true
 		}
 	}
@@ -927,7 +927,7 @@ func (r *InstanceInactiveTerminationReconciler) GetRemainingInactivityDestructio
 		return 0, false, fmt.Errorf("template not found in context")
 	}
 
-	destroyAfterInactivity := template.Spec.DestroyAfterInactivity
+	destroyAfterInactivity := template.Spec.Cleanup.DeleteAfterInactivity
 	if destroyAfterInactivity == NeverTimeoutValue || destroyAfterInactivity == "" {
 		return 0, false, nil
 	}

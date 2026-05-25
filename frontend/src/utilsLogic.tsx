@@ -98,9 +98,10 @@ export const makeGuiTemplate = (
     name: tq.alias.name ?? '',
     gui: hasGUI,
     description: tq.original.spec?.description ?? '',
-    deleteAfter: tq.original.spec?.deleteAfter ?? 'never',
-    inactivityTimeout: tq.original.spec?.inactivityTimeout ?? 'never',
-    destroyAfterInactivity: tq.original.spec?.destroyAfterInactivity ?? 'never',
+    deleteAfter: tq.original.spec?.cleanup?.deleteAfterCreation ?? 'never',
+    inactivityTimeout: tq.original.spec?.cleanup?.stopAfterInactivity ?? 'never',
+    destroyAfterInactivity:
+      tq.original.spec?.cleanup?.deleteAfterInactivity ?? 'never',
     persistent: hasPersistent,
     nodeSelector: tq.original.spec?.nodeSelector,
     resources: {

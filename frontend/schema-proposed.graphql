@@ -1,0 +1,170 @@
+type Cleanup {
+  deleteAfterCreation: String
+  stopAfterInactivity: String
+  deleteAfterInactivity: String
+}
+type Spec {
+  prettyName: String
+  description: String
+  allowPublicExposure: Boolean
+  nodeSelector: JSON
+  environmentList: [Environment]
+  workspaceCrownlabsPolitoItWorkspaceRef: WorkspaceRef
+  cleanup: Cleanup
+}
+"""
+Minimal proposed schema for frontend codegen to support `spec.cleanup`.
+This is a stub used only for local code generation and should be adapted
+to the real server schema before deploying the server.
+"""
+
+scalar JSON
+
+# Cleanup nested spec
+type Cleanup {
+  deleteAfterCreation: String
+  stopAfterInactivity: String
+  deleteAfterInactivity: String
+}
+
+input CleanupInput {
+  deleteAfterCreation: String
+  stopAfterInactivity: String
+  deleteAfterInactivity: String
+}
+
+# Supporting types (minimal)
+type ContainerStartupOptions {
+  sourceArchiveURL: String
+  contentPath: String
+  startupArgs: [String]
+  enforceWorkdir: Boolean
+}
+
+input ContainerStartupOptionsInput {
+  sourceArchiveURL: String
+  contentPath: String
+  startupArgs: [String]
+  enforceWorkdir: Boolean
+}
+
+type Resources {
+  cpu: Int
+  disk: String
+  memory: String
+  reservedCPUPercentage: Int
+}
+
+input ResourcesInput {
+  cpu: Int
+  disk: String
+  memory: String
+  reservedCPUPercentage: Int
+}
+
+type SharedVolumeRef {
+  name: String
+  namespace: String
+}
+
+input SharedVolumeRefInput {
+  name: String
+  namespace: String
+}
+
+type SharedVolumeMount {
+  sharedVolume: SharedVolumeRef
+  mountPath: String
+  readOnly: Boolean
+}
+
+input SharedVolumeMountInput {
+  sharedVolume: SharedVolumeRefInput
+  mountPath: String
+  readOnly: Boolean
+}
+
+type Environment {
+  name: String
+  environmentType: String
+  mountMyDriveVolume: Boolean
+  image: String
+  guiEnabled: Boolean
+  disableControls: Boolean
+  rewriteURL: Boolean
+  persistent: Boolean
+  containerStartupOptions: ContainerStartupOptions
+  resources: Resources
+  sharedVolumeMounts: [SharedVolumeMount]
+}
+
+input EnvironmentInput {
+  name: String
+  environmentType: String
+  mountMyDriveVolume: Boolean
+  image: String
+  guiEnabled: Boolean
+  disableControls: Boolean
+  rewriteURL: Boolean
+  persistent: Boolean
+  containerStartupOptions: ContainerStartupOptionsInput
+  resources: ResourcesInput
+  sharedVolumeMounts: [SharedVolumeMountInput]
+}
+
+type WorkspaceRef {
+  name: String
+}
+
+input WorkspaceRefInput {
+  name: String
+}
+
+type TemplateSpec {
+  prettyName: String
+  description: String
+  allowPublicExposure: Boolean
+  nodeSelector: JSON
+  environmentList: [Environment]
+  workspaceCrownlabsPolitoItWorkspaceRef: WorkspaceRef
+  cleanup: Cleanup
+}
+
+input TemplateSpecInput {
+  prettyName: String
+  description: String
+  allowPublicExposure: Boolean
+  nodeSelector: JSON
+  environmentList: [EnvironmentInput]
+  workspaceCrownlabsPolitoItWorkspaceRef: WorkspaceRefInput
+  cleanup: CleanupInput
+}
+
+type Metadata {
+  name: String
+  namespace: String
+}
+
+type Template {
+  spec: TemplateSpec
+  metadata: Metadata
+}
+
+type TemplateList {
+  templates: [Template]
+}
+
+input TemplateInput {
+  kind: String
+  apiVersion: String
+  spec: TemplateSpecInput
+  metadata: JSON
+}
+
+type Query {
+  itPolitoCrownlabsV1alpha2TemplateList(namespace: String): TemplateList
+}
+
+type Mutation {
+  createCrownlabsPolitoItV1alpha2NamespacedTemplate(namespace: String, itPolitoCrownlabsV1alpha2TemplateInput: TemplateInput): Template
+}

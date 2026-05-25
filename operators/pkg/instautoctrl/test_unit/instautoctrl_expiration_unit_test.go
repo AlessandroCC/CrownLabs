@@ -114,8 +114,10 @@ var _ = Describe("Instautoctrl-expiration-unit", func() {
 					Image:           "crownlabs/vm",
 				},
 			},
-			DeleteAfter:       CustomDeleteAfter2,
-			InactivityTimeout: CustomInactivityTimeout2,
+			Cleanup: crownlabsv1alpha2.CleanupSpec{
+				DeleteAfterCreation: CustomDeleteAfter2,
+				StopAfterInactivity: CustomInactivityTimeout2,
+			},
 		}
 
 		persistentTemplate = crownlabsv1alpha2.Template{
@@ -298,7 +300,7 @@ var _ = Describe("Instautoctrl-expiration-unit", func() {
 		ctx, _ = pkgcontext.InstanceInto(ctx, currentInstance)
 		ctx, _ = pkgcontext.TemplateInto(ctx, currentTemplate)
 		ctx, _ = pkgcontext.TenantInto(ctx, currentTenant)
-		remainingTime, err := r.CheckInstanceExpiration(ctx, currentTemplate.Spec.InactivityTimeout)
+		remainingTime, err := r.CheckInstanceExpiration(ctx, currentTemplate.Spec.Cleanup.StopAfterInactivity)
 		Expect(err).ToNot(HaveOccurred())
 		deleteAfterDuration, err := time.ParseDuration(CustomDeleteAfter2)
 		Expect(err).ToNot(HaveOccurred())

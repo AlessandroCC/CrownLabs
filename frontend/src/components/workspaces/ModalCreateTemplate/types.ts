@@ -18,6 +18,11 @@ export type TemplateForm = {
   deleteAfter: string;
   inactivityTimeout: string;
   destroyAfterInactivity: string;
+  cleanup?: {
+    deleteAfterCreation?: string;
+    stopAfterInactivity?: string;
+    deleteAfterInactivity?: string;
+  };
   allowPublicExposure: boolean;
   nodeSelector?: Record<string, string> | null;
 };
