@@ -276,17 +276,17 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
         {
           op: 'replace',
           path: '/spec/cleanup/deleteAfterCreation',
-          value: t.deleteAfter,
+          value: t.cleanup?.deleteAfterCreation,
         },
         {
           op: 'replace',
           path: '/spec/cleanup/stopAfterInactivity',
-          value: t.inactivityTimeout,
+          value: t.cleanup?.stopAfterInactivity,
         },
         {
           op: 'replace',
           path: '/spec/cleanup/deleteAfterInactivity',
-          value: t.destroyAfterInactivity,
+          value: t.cleanup?.deleteAfterInactivity,
         },
         {
           op: 'replace',
@@ -385,16 +385,15 @@ const TemplatesTableLogic: FC<ITemplateTableLogicProps> = ({ ...props }) => {
                     // Include nodeSelector for modal initialization (state setup), but it won't be in the form
                     nodeSelector: template.nodeSelector,
                     description: template.description ?? template.name,
-                    deleteAfter:
-                      template.cleanup?.deleteAfterCreation ??
-                      template.deleteAfter,
+                    cleanup: {
+                      deleteAfterCreation:
+                        template.cleanup?.deleteAfterCreation,
+                      stopAfterInactivity:
+                        template.cleanup?.stopAfterInactivity,
+                      deleteAfterInactivity:
+                        template.cleanup?.deleteAfterInactivity,
+                    },
                     allowPublicExposure: template.allowPublicExposure,
-                    inactivityTimeout:
-                      template.cleanup?.stopAfterInactivity ??
-                      template.inactivityTimeout,
-                    destroyAfterInactivity:
-                      template.cleanup?.deleteAfterInactivity ??
-                      template.destroyAfterInactivity,
                     environments: template.environmentList.map(env => ({
                       name: env.name,
                       persistent: env.persistent,

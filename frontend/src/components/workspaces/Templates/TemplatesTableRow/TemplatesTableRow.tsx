@@ -63,8 +63,6 @@ export interface ITemplatesTableRowProps {
   expandRow: (value: string, create: boolean) => void;
 }
 
-
-
 const canCreateInstance = (
   template: Template,
   availableQuota: IQuota,
@@ -98,8 +96,10 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
   const canCreate = canCreateInstance(template, workspaceAvailableQuota);
 
   const hasInactivity =
-    (template.inactivityTimeout && template.inactivityTimeout !== 'never') ||
-    (template.destroyAfterInactivity && template.destroyAfterInactivity !== 'never');
+    (template.cleanup?.stopAfterInactivity &&
+      template.cleanup?.stopAfterInactivity !== 'never') ||
+    (template.cleanup?.deleteAfterInactivity &&
+      template.cleanup?.deleteAfterInactivity !== 'never');
   const {
     data: labelsData,
     loading: loadingLabels,
@@ -141,7 +141,6 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
   const handleEditTemplate = () => {
     editTemplate(template);
   };
-
 
   return (
     <>
@@ -288,19 +287,39 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                               <Tooltip
                                 title={
                                   <div className="text-left">
-                                    {(template.inactivityTimeout !== 'never' || template.destroyAfterInactivity !== 'never') && (
+                                    {(template.cleanup?.stopAfterInactivity !==
+                                      'never' ||
+                                      template.cleanup
+                                        ?.deleteAfterInactivity !==
+                                        'never') && (
                                       <>
                                         These instances will be: <br />
                                       </>
                                     )}
-                                    {template.inactivityTimeout !== 'never' && (
+                                    {template.cleanup?.stopAfterInactivity !==
+                                      'never' && (
                                       <>
-                                        - powered off after <b>{template.inactivityTimeout}</b> of inactivity<br />
+                                        - powered off after{' '}
+                                        <b>
+                                          {
+                                            template.cleanup
+                                              ?.stopAfterInactivity
+                                          }
+                                        </b>{' '}
+                                        of inactivity
+                                        <br />
                                       </>
                                     )}
-                                    {template.destroyAfterInactivity !== 'never' && (
+                                    {template.cleanup?.deleteAfterInactivity !==
+                                      'never' && (
                                       <>
-                                        - deleted after being stopped for <b>{template.destroyAfterInactivity}</b>
+                                        - deleted after being stopped for{' '}
+                                        <b>
+                                          {
+                                            template.cleanup
+                                              ?.deleteAfterInactivity
+                                          }
+                                        </b>
                                       </>
                                     )}
                                   </div>
@@ -341,8 +360,12 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
               <label className="ml-3 cursor-pointer">
                 <Space>
                   {template.description != '' ? (
-                    <Tooltip title={<span>{template.description}</span>}>{template.name}</Tooltip>
-                  ) : (template.name)}
+                    <Tooltip title={<span>{template.description}</span>}>
+                      {template.name}
+                    </Tooltip>
+                  ) : (
+                    template.name
+                  )}
                   {!template.hasMultipleEnvironments &&
                     template.allowPublicExposure && (
                       <Tooltip title="Public Port Exposure - This template allows exposing internal ports to external networks for remote access">
@@ -380,26 +403,34 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                 <Tooltip
                   title={
                     <div className="text-left">
-                      {(template.inactivityTimeout !== 'never' || template.destroyAfterInactivity !== 'never') && (
+                      {(template.cleanup?.stopAfterInactivity !== 'never' ||
+                        template.cleanup?.deleteAfterInactivity !==
+                          'never') && (
                         <>
                           These instances will be: <br />
                         </>
                       )}
-                      {template.inactivityTimeout !== 'never' && (
+                      {template.cleanup?.stopAfterInactivity !== 'never' && (
                         <>
-                          - powered off after <b>{template.inactivityTimeout}</b> of inactivity<br />
+                          - powered off after{' '}
+                          <b>{template.cleanup?.stopAfterInactivity}</b> of
+                          inactivity
+                          <br />
                         </>
                       )}
-                      {template.destroyAfterInactivity !== 'never' && (
+                      {template.cleanup?.deleteAfterInactivity !== 'never' && (
                         <>
-                          - deleted after being stopped for <b>{template.destroyAfterInactivity}</b>
+                          - deleted after being stopped for{' '}
+                          <b>{template.cleanup?.deleteAfterInactivity}</b>
                         </>
                       )}
                     </div>
                   }
                 >
                   <div className="ml-3 flex items-center">
-                    <ClockCircleOutlined style={{ fontSize: '18px', color: '#f8cf8d' }} />
+                    <ClockCircleOutlined
+                      style={{ fontSize: '18px', color: '#f8cf8d' }}
+                    />
                   </div>
                 </Tooltip>
               )}
@@ -444,14 +475,12 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                         <div>CPU: {env.resources.cpu} core(s)</div>
                         <div>
                           RAM:{' '}
-                          {convertToGiB(env.resources.memory) || 'unavailable'}
-                          B
+                          {convertToGiB(env.resources.memory) || 'unavailable'}B
                         </div>
                         {env.persistent && (
                           <div>
                             DISK:{' '}
-                            {convertToGiB(env.resources.disk) || 'unavailable'}
-                            B
+                            {convertToGiB(env.resources.disk) || 'unavailable'}B
                           </div>
                         )}
                       </div>
@@ -460,11 +489,17 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                       <div className="font-medium">Total Resources:</div>
                       <div>Total CPU: {template.resources.cpu} core(s)</div>
                       <div>
-                        Total RAM: {convertToGiB(template.resources.memory) || 'unavailable'} GiB
+                        Total RAM:{' '}
+                        {convertToGiB(template.resources.memory) ||
+                          'unavailable'}{' '}
+                        GiB
                       </div>
                       {template.persistent && (
                         <div>
-                          Total DISK: {convertToGiB(template.resources.disk) || 'unavailable'} GiB
+                          Total DISK:{' '}
+                          {convertToGiB(template.resources.disk) ||
+                            'unavailable'}{' '}
+                          GiB
                         </div>
                       )}
                     </div>
@@ -481,9 +516,10 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                     </div>
                     <div>
                       {template.persistent
-                        ? ` DISK: ${convertToGiB(template.resources.disk) ||
-                        'unavailable'
-                        }GiB`
+                        ? ` DISK: ${
+                            convertToGiB(template.resources.disk) ||
+                            'unavailable'
+                          }GiB`
                         : ``}
                     </div>
                   </>
@@ -574,29 +610,29 @@ const TemplatesTableRow: FC<ITemplatesTableRowProps> = ({
                 items:
                   loadingLabels || labelsError
                     ? [
-                      {
-                        key: 'error',
-                        label: loadingLabels
-                          ? 'Loading labels...'
-                          : 'Error loading labels',
-                        disabled: true,
-                      },
-                    ]
+                        {
+                          key: 'error',
+                          label: loadingLabels
+                            ? 'Loading labels...'
+                            : 'Error loading labels',
+                          disabled: true,
+                        },
+                      ]
                     : labelsData?.labels?.map(({ key, value }) => ({
-                      key: JSON.stringify({ [key]: value }),
-                      label: `${cleanupLabels(key)}=${value}`,
-                      disabled: loadingLabels,
-                      onClick: () => {
-                        setCreateDisabled(true);
-                        createInstance(template.id, JSON.parse(key))
-                          .then(() => {
-                            refreshClock();
-                            setTimeout(setCreateDisabled, 400, false);
-                            expandRow(template.id, true);
-                          })
-                          .catch(() => setCreateDisabled(false));
-                      },
-                    })) || [],
+                        key: JSON.stringify({ [key]: value }),
+                        label: `${cleanupLabels(key)}=${value}`,
+                        disabled: loadingLabels,
+                        onClick: () => {
+                          setCreateDisabled(true);
+                          createInstance(template.id, JSON.parse(key))
+                            .then(() => {
+                              refreshClock();
+                              setTimeout(setCreateDisabled, 400, false);
+                              expandRow(template.id, true);
+                            })
+                            .catch(() => setCreateDisabled(false));
+                        },
+                      })) || [],
               }}
               onClick={createInstanceHandler}
               disabled={createDisabled || !canCreate}

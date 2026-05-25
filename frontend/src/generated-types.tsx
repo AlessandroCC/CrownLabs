@@ -3131,32 +3131,28 @@ export type Spec5Input = {
 };
 
 /** TemplateSpec is the specification of the desired state of the Template. */
+export type Cleanup = {
+  __typename?: 'Cleanup';
+  deleteAfterCreation?: Maybe<Scalars['String']['output']>;
+  deleteAfterInactivity?: Maybe<Scalars['String']['output']>;
+  stopAfterInactivity?: Maybe<Scalars['String']['output']>;
+};
+
+export type CleanupInput = {
+  deleteAfterCreation?: InputMaybe<Scalars['String']['input']>;
+  deleteAfterInactivity?: InputMaybe<Scalars['String']['input']>;
+  stopAfterInactivity?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Spec6 = {
   __typename?: 'Spec6';
   /** Whether the Template has the authorization to be Public Exposed or not, using a LoadBalancer service. */
   allowPublicExposure?: Maybe<Scalars['Boolean']['output']>;
-  /**
-   * The maximum lifetime of an Instance referencing the current Template.
-   * Once this period is expired, the Instance may be automatically deleted
-   * or stopped to save resources. If set to "never", the instance will not be
-   * automatically terminated.
-   */
-  deleteAfter?: Maybe<Scalars['String']['output']>;
+  cleanup?: Maybe<Cleanup>;
   /** A textual description of the Template. */
   description: Scalars['String']['output'];
-  /**
-   * The maximum period of time a persistent instance can remain powered off
-   * after being stopped for inactivity, before being completely deleted.
-   */
-  destroyAfterInactivity?: Maybe<Scalars['String']['output']>;
   /** The list of environments (i.e. VMs or containers) that compose the Template. */
   environmentList: Array<Maybe<EnvironmentListListItem>>;
-  /**
-   * The maximum period of inactivity after which an Instance referencing
-   * the current Template will be automatically stopped or deleted to
-   * save resources.
-   */
-  inactivityTimeout?: Maybe<Scalars['String']['output']>;
   /**
    * Labels that are used for the selection of the node.
    * They are given by means of a pointer to check the presence of the field.
@@ -3175,28 +3171,11 @@ export type Spec6 = {
 export type Spec6Input = {
   /** Whether the Template has the authorization to be Public Exposed or not, using a LoadBalancer service. */
   allowPublicExposure?: InputMaybe<Scalars['Boolean']['input']>;
-  /**
-   * The maximum lifetime of an Instance referencing the current Template.
-   * Once this period is expired, the Instance may be automatically deleted
-   * or stopped to save resources. If set to "never", the instance will not be
-   * automatically terminated.
-   */
-  deleteAfter?: InputMaybe<Scalars['String']['input']>;
+  cleanup?: InputMaybe<CleanupInput>;
   /** A textual description of the Template. */
   description: Scalars['String']['input'];
-  /**
-   * The maximum period of time a persistent instance can remain powered off
-   * after being stopped for inactivity, before being completely deleted.
-   */
-  destroyAfterInactivity?: InputMaybe<Scalars['String']['input']>;
   /** The list of environments (i.e. VMs or containers) that compose the Template. */
   environmentList: Array<InputMaybe<EnvironmentListListItemInput>>;
-  /**
-   * The maximum period of inactivity after which an Instance referencing
-   * the current Template will be automatically stopped or deleted to
-   * save resources.
-   */
-  inactivityTimeout?: InputMaybe<Scalars['String']['input']>;
   /**
    * Labels that are used for the selection of the node.
    * They are given by means of a pointer to check the presence of the field.
@@ -3819,16 +3798,16 @@ export type CreateTemplateMutationVariables = Exact<{
   templateName: Scalars['String']['input'];
   environmentList: Array<EnvironmentListListItemInput> | EnvironmentListListItemInput;
   templateId?: InputMaybe<Scalars['String']['input']>;
-  deleteAfter?: InputMaybe<Scalars['String']['input']>;
+  deleteAfterCreation?: InputMaybe<Scalars['String']['input']>;
   descriptionTemplate: Scalars['String']['input'];
-  inactivityTimeout?: InputMaybe<Scalars['String']['input']>;
-  destroyAfterInactivity?: InputMaybe<Scalars['String']['input']>;
+  stopAfterInactivity?: InputMaybe<Scalars['String']['input']>;
+  deleteAfterInactivity?: InputMaybe<Scalars['String']['input']>;
   allowPublicExposure?: InputMaybe<Scalars['Boolean']['input']>;
   nodeSelector?: InputMaybe<Scalars['JSON']['input']>;
 }>;
 
 
-export type CreateTemplateMutation = { __typename?: 'Mutation', createdTemplate?: { __typename?: 'ItPolitoCrownlabsV1alpha2Template', spec?: { __typename?: 'Spec6', prettyName: string, description: string, deleteAfter?: string | null, inactivityTimeout?: string | null, destroyAfterInactivity?: string | null, allowPublicExposure?: boolean | null, nodeSelector?: any | null, environmentList: Array<{ __typename?: 'EnvironmentListListItem', name: string, guiEnabled?: boolean | null, persistent?: boolean | null, resources: { __typename?: 'Resources', cpu: number, disk?: any | null, memory: any, reservedCPUPercentage: number } } | null> } | null, metadata?: { __typename?: 'IoK8sApimachineryPkgApisMetaV1ObjectMeta', name?: string | null, namespace?: string | null } | null } | null };
+export type CreateTemplateMutation = { __typename?: 'Mutation', createdTemplate?: { __typename?: 'ItPolitoCrownlabsV1alpha2Template', spec?: { __typename?: 'Spec6', prettyName: string, description: string, deleteAfterCreation?: string | null, stopAfterInactivity?: string | null, deleteAfterInactivity?: string | null, allowPublicExposure?: boolean | null, nodeSelector?: any | null, environmentList: Array<{ __typename?: 'EnvironmentListListItem', name: string, guiEnabled?: boolean | null, persistent?: boolean | null, resources: { __typename?: 'Resources', cpu: number, disk?: any | null, memory: any, reservedCPUPercentage: number } } | null> } | null, metadata?: { __typename?: 'IoK8sApimachineryPkgApisMetaV1ObjectMeta', name?: string | null, namespace?: string | null } | null } | null };
 
 export type CreateWorkspaceMutationVariables = Exact<{
   name: Scalars['String']['input'];
@@ -3930,7 +3909,7 @@ export type WorkspaceTemplatesQueryVariables = Exact<{
 }>;
 
 
-export type WorkspaceTemplatesQuery = { __typename?: 'Query', templateList?: { __typename?: 'ItPolitoCrownlabsV1alpha2TemplateList', templates: Array<{ __typename?: 'ItPolitoCrownlabsV1alpha2Template', spec?: { __typename?: 'Spec6', prettyName: string, description: string, allowPublicExposure?: boolean | null, deleteAfter?: string | null, inactivityTimeout?: string | null, destroyAfterInactivity?: string | null, nodeSelector?: any | null, environmentList: Array<{ __typename?: 'EnvironmentListListItem', name: string, environmentType: EnvironmentType, mountMyDriveVolume: boolean, image: string, guiEnabled?: boolean | null, disableControls?: boolean | null, rewriteURL?: boolean | null, persistent?: boolean | null, containerStartupOptions?: { __typename?: 'ContainerStartupOptions', sourceArchiveURL?: string | null, contentPath?: string | null, startupArgs?: Array<string | null> | null, enforceWorkdir?: boolean | null } | null, resources: { __typename?: 'Resources', cpu: number, disk?: any | null, memory: any, reservedCPUPercentage: number }, sharedVolumeMounts?: Array<{ __typename?: 'SharedVolumeMountsListItem', mountPath: string, readOnly: boolean, sharedVolume: { __typename?: 'SharedVolume', name: string, namespace?: string | null } } | null> | null } | null>, workspaceCrownlabsPolitoItWorkspaceRef?: { __typename?: 'WorkspaceCrownlabsPolitoItWorkspaceRef', name: string } | null } | null, metadata?: { __typename?: 'IoK8sApimachineryPkgApisMetaV1ObjectMeta', name?: string | null, namespace?: string | null } | null } | null> } | null };
+export type WorkspaceTemplatesQuery = { __typename?: 'Query', templateList?: { __typename?: 'ItPolitoCrownlabsV1alpha2TemplateList', templates: Array<{ __typename?: 'ItPolitoCrownlabsV1alpha2Template', spec?: { __typename?: 'Spec6', prettyName: string, description: string, allowPublicExposure?: boolean | null, deleteAfterCreation?: string | null, stopAfterInactivity?: string | null, deleteAfterInactivity?: string | null, nodeSelector?: any | null, environmentList: Array<{ __typename?: 'EnvironmentListListItem', name: string, environmentType: EnvironmentType, mountMyDriveVolume: boolean, image: string, guiEnabled?: boolean | null, disableControls?: boolean | null, rewriteURL?: boolean | null, persistent?: boolean | null, containerStartupOptions?: { __typename?: 'ContainerStartupOptions', sourceArchiveURL?: string | null, contentPath?: string | null, startupArgs?: Array<string | null> | null, enforceWorkdir?: boolean | null } | null, resources: { __typename?: 'Resources', cpu: number, disk?: any | null, memory: any, reservedCPUPercentage: number }, sharedVolumeMounts?: Array<{ __typename?: 'SharedVolumeMountsListItem', mountPath: string, readOnly: boolean, sharedVolume: { __typename?: 'SharedVolume', name: string, namespace?: string | null } } | null> | null } | null>, workspaceCrownlabsPolitoItWorkspaceRef?: { __typename?: 'WorkspaceCrownlabsPolitoItWorkspaceRef', name: string } | null } | null, metadata?: { __typename?: 'IoK8sApimachineryPkgApisMetaV1ObjectMeta', name?: string | null, namespace?: string | null } | null } | null> } | null };
 
 export type TenantQueryVariables = Exact<{
   tenantId: Scalars['String']['input'];
@@ -4536,17 +4515,17 @@ export type CreateSharedVolumeMutationHookResult = ReturnType<typeof useCreateSh
 export type CreateSharedVolumeMutationResult = Apollo.MutationResult<CreateSharedVolumeMutation>;
 export type CreateSharedVolumeMutationOptions = Apollo.BaseMutationOptions<CreateSharedVolumeMutation, CreateSharedVolumeMutationVariables>;
 export const CreateTemplateDocument = gql`
-    mutation createTemplate($workspaceId: String!, $workspaceNamespace: String!, $templateName: String!, $environmentList: [EnvironmentListListItemInput!]!, $templateId: String = "template-", $deleteAfter: String, $descriptionTemplate: String!, $inactivityTimeout: String, $destroyAfterInactivity: String, $allowPublicExposure: Boolean, $nodeSelector: JSON) {
+    mutation createTemplate($workspaceId: String!, $workspaceNamespace: String!, $templateName: String!, $environmentList: [EnvironmentListListItemInput!]!, $templateId: String = "template-", $deleteAfterCreation: String, $descriptionTemplate: String!, $stopAfterInactivity: String, $deleteAfterInactivity: String, $allowPublicExposure: Boolean, $nodeSelector: JSON) {
   createdTemplate: createCrownlabsPolitoItV1alpha2NamespacedTemplate(
     namespace: $workspaceNamespace
-    itPolitoCrownlabsV1alpha2TemplateInput: {kind: "Template", apiVersion: "crownlabs.polito.it/v1alpha2", spec: {prettyName: $templateName, description: $descriptionTemplate, deleteAfter: $deleteAfter, inactivityTimeout: $inactivityTimeout, destroyAfterInactivity: $destroyAfterInactivity, environmentList: $environmentList, allowPublicExposure: $allowPublicExposure, nodeSelector: $nodeSelector, workspaceCrownlabsPolitoItWorkspaceRef: {name: $workspaceId}}, metadata: {generateName: $templateId, namespace: $workspaceNamespace}}
+    itPolitoCrownlabsV1alpha2TemplateInput: {kind: "Template", apiVersion: "crownlabs.polito.it/v1alpha2", spec: {prettyName: $templateName, description: $descriptionTemplate, deleteAfterCreation: $deleteAfterCreation, stopAfterInactivity: $stopAfterInactivity, deleteAfterInactivity: $deleteAfterInactivity, environmentList: $environmentList, allowPublicExposure: $allowPublicExposure, nodeSelector: $nodeSelector, workspaceCrownlabsPolitoItWorkspaceRef: {name: $workspaceId}}, metadata: {generateName: $templateId, namespace: $workspaceNamespace}}
   ) {
     spec {
       prettyName
       description
-      deleteAfter
-      inactivityTimeout
-      destroyAfterInactivity
+      deleteAfterCreation
+      stopAfterInactivity
+      deleteAfterInactivity
       allowPublicExposure
       nodeSelector
       environmentList {
@@ -4588,10 +4567,10 @@ export type CreateTemplateMutationFn = Apollo.MutationFunction<CreateTemplateMut
  *      templateName: // value for 'templateName'
  *      environmentList: // value for 'environmentList'
  *      templateId: // value for 'templateId'
- *      deleteAfter: // value for 'deleteAfter'
+ *      deleteAfterCreation: // value for 'deleteAfterCreation'
  *      descriptionTemplate: // value for 'descriptionTemplate'
- *      inactivityTimeout: // value for 'inactivityTimeout'
- *      destroyAfterInactivity: // value for 'destroyAfterInactivity'
+ *      stopAfterInactivity: // value for 'stopAfterInactivity'
+ *      deleteAfterInactivity: // value for 'deleteAfterInactivity'
  *      allowPublicExposure: // value for 'allowPublicExposure'
  *      nodeSelector: // value for 'nodeSelector'
  *   },
@@ -5313,9 +5292,9 @@ export const WorkspaceTemplatesDocument = gql`
         prettyName
         description
         allowPublicExposure
-        deleteAfter
-        inactivityTimeout
-        destroyAfterInactivity
+        deleteAfterCreation
+        stopAfterInactivity
+        deleteAfterInactivity
         nodeSelector
         environmentList {
           name

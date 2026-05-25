@@ -98,10 +98,11 @@ export const makeGuiTemplate = (
     name: tq.alias.name ?? '',
     gui: hasGUI,
     description: tq.original.spec?.description ?? '',
-    deleteAfter: tq.original.spec?.cleanup?.deleteAfterCreation ?? 'never',
-    inactivityTimeout: tq.original.spec?.cleanup?.stopAfterInactivity ?? 'never',
-    destroyAfterInactivity:
-      tq.original.spec?.cleanup?.deleteAfterInactivity ?? 'never',
+    cleanup: {
+      deleteAfterCreation: tq.original.spec?.cleanup?.deleteAfterCreation ?? 'never',
+      stopAfterInactivity: tq.original.spec?.cleanup?.stopAfterInactivity ?? 'never',
+      deleteAfterInactivity: tq.original.spec?.cleanup?.deleteAfterInactivity ?? 'never',
+    },
     persistent: hasPersistent,
     nodeSelector: tq.original.spec?.nodeSelector,
     resources: {
@@ -720,9 +721,11 @@ export const getTemplatesMapped = (
       allowPublicExposure,
       environmentList: environmentList,
       hasMultipleEnvironments: hasMultipleEnvironments ?? false,
-      deleteAfter: '',
-      inactivityTimeout: '',
-      destroyAfterInactivity: '',
+      cleanup: {
+        deleteAfterCreation: '',
+        stopAfterInactivity: '',
+        deleteAfterInactivity: '',
+      },
     };
   });
 };

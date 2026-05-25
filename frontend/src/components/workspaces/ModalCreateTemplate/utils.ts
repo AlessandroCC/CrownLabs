@@ -10,8 +10,6 @@ export const formItemLayout = {
   style: { marginBottom: 14 },
 };
 
-
-
 export const getImageNameNoVer = (image: string) => {
   // split on the last ':' to correctly handle registry:port/repo:tag cases
   return image.includes(':') ? image.slice(0, image.lastIndexOf(':')) : image;
@@ -22,9 +20,9 @@ export const getDefaultTemplate = (resources: Resources): Template => {
     name: '',
     description: '',
     environments: [getDefaultTemplateEnvironment(resources, 0)],
-    deleteAfter: 'never',
-    inactivityTimeout: 'never',
-    destroyAfterInactivity: 'never',
+    deleteAfterCreation: 'never',
+    stopAfterInactivity: 'never',
+    deleteAfterInactivity: 'never',
     allowPublicExposure: false,
   };
 };

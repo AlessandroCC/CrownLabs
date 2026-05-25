@@ -15,9 +15,6 @@ export type TemplateForm = {
   name: string;
   description: string;
   environments: TemplateFormEnv[];
-  deleteAfter: string;
-  inactivityTimeout: string;
-  destroyAfterInactivity: string;
   cleanup?: {
     deleteAfterCreation?: string;
     stopAfterInactivity?: string;
@@ -51,7 +48,7 @@ export type ContainerStartupOptionsForm = {
   contentPath: string;
   startupArgs: string[];
   EnforceWorkDir: boolean;
-}
+};
 
 export type ChildFormItem = {
   parentFormName: number;

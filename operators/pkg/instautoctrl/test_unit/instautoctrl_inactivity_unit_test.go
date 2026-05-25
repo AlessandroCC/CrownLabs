@@ -586,7 +586,7 @@ var _ = Describe("Instautoctrl inactivity unit test", func() {
 			Expect(err).ToNot(HaveOccurred(), "SetupInstanceAnnotations should not return an error")
 		})
 
-		It("should return false if destroyAfterInactivity is NeverTimeoutValue", func() {
+		It("should return false if deleteAfterInactivity is NeverTimeoutValue", func() {
 			currentTemplate.Spec.Cleanup.DeleteAfterInactivity = instautoctrl.NeverTimeoutValue
 
 			remaining, isActive, err := r.GetRemainingInactivityDestructionTime(ctx, currentInstance)

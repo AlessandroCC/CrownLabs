@@ -60,15 +60,13 @@ On the left you can see the controller (in blue) and the two CRDs used to descri
 
 ![Instance Operator Architecture](../documentation/instance-operator.svg)
 
+Upon the creation of a _Instance_, the operator triggers the creation of the following components:
 
-
-Upon the creation of a *Instance*, the operator triggers the creation of the following components:
-* Kubevirt VirtualMachine Instance and the logic to access the noVNC instance inside the VM (Service, Ingress)
-* An instance of [Oauth2 Proxy](https://github.com/oauth2-proxy/oauth2-proxy) (Deployment, Service, Ingress) to regulate access to the VM.
-*  A [DataVolume](https://github.com/kubevirt/containerized-data-importer/blob/main/doc/datavolumes.md) (only in case of persistent VMs). It wraps a Persistent Volume Claim (PVC), and takes care of initializing it with the content of the selected VM image through an importer pod.
+- Kubevirt VirtualMachine Instance and the logic to access the noVNC instance inside the VM (Service, Ingress)
+- An instance of [Oauth2 Proxy](https://github.com/oauth2-proxy/oauth2-proxy) (Deployment, Service, Ingress) to regulate access to the VM.
+- A [DataVolume](https://github.com/kubevirt/containerized-data-importer/blob/main/doc/datavolumes.md) (only in case of persistent VMs). It wraps a Persistent Volume Claim (PVC), and takes care of initializing it with the content of the selected VM image through an importer pod.
 
 All those resources are bound to the Instance life-cycle via the [OwnerRef property](https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/)
-
 
 ### APIs/CRDs
 
@@ -99,11 +97,12 @@ N.B. The process of creating a persistent VirtualMachine can take, as said, a bi
 ### Snapshots of persistent VM instances
 
 The Instance Operator allows the creation of snapshots of persistent VM instances, producing a new image to be uploaded into the docker registry.
-This feature is provided by an additional control loop running in the Instance Operator, the *Instance Snapshot controller*, in charge of watching the InstanceSnapshot resource.
-This controller starts the snapshot creation process once a new *InstanceSnapshot* resource is found.
+This feature is provided by an additional control loop running in the Instance Operator, the _Instance Snapshot controller_, in charge of watching the InstanceSnapshot resource.
+This controller starts the snapshot creation process once a new _InstanceSnapshot_ resource is found.
 
 The two main limitations of this approach are the following:
-- Snapshots of *ephemeral* VMs are currently unsupported
+
+- Snapshots of _ephemeral_ VMs are currently unsupported
 - Persistent VMs should be powered off when the snapshot creation process starts, otherwise it is not possible to steal DataVolume from the VM and the creation fails.
 
 If the request for a new snapshot is valid, a new Job is created that performs the following two main actions:
@@ -115,16 +114,17 @@ When the snapshot creation process successfully terminates, the docker registry 
 
 ### Attachable storage
 
-The Instance Operator can mount two types of AttachableVolumes to the running instance, that are the user's personal storage (aka `MyDrive`) and `SharedVolume`s. 
+The Instance Operator can mount two types of AttachableVolumes to the running instance, that are the user's personal storage (aka `MyDrive`) and `SharedVolume`s.
 
 The Instance Operator mounts or not the user's personal storage inside an Environment, based on the `MountMyDriveVolume` flag inside each Environment that can be found in an Instance Resource.
 
 The Instance Operator, also, mounts all SharedVolumes mentioned inside an Environment, based on the `SharedVolumeMounts` array inside each Environment that can be found in an Instance Resource.
 
-This operation is performed both for Containers and VirtualMachines. 
+This operation is performed both for Containers and VirtualMachines.
 In both cases, for SharedVolumes, the Instance Operator creates a PVC (known as "mirror PVC") in the tenant's namespace, that will be used to refer to the original PVC without moving it from the workspace namespace (as `Pod`s cannot refer to PVC across namespaces).
 
 But more specifically:
+
 - for Containers, the mirror PVCs are directly mounted on the `Pod` as `VolumeMount`.
 - for Virtual Machines, the mirror PVCs are attached to the `Pod`: then, to use them in the VM, cloud-init is used to add the mount point to the VM's `/etc/fstab` file and the machine tries to mount it using the virtio Filesystem.
 
@@ -154,13 +154,13 @@ You can find the full documentation [here](/operators/pkg/instautoctrl/README.md
 #### Instance Inactive Termination controller
 
 This controller periodically checks running Instances to determine if they are still in use or can be terminated because of inactivity.
-Each **Template** resource associated with an Instance defines `spec.cleanup.stopAfterInactivity` (previously `InactivityTimeout`), which represents the period of inactivity after which the Instance is considered unused.
+Each **Template** resource associated with an Instance defines `spec.cleanup.stopAfterInactivity` (previously `StopAfterInactivity`), which represents the period of inactivity after which the Instance is considered unused.
 If omitted, this field defaults to `never`, meaning that Instances created from that template will be ignored by this controller.
 
 To evaluate whether an Instance is active, the controller relies on **Prometheus** metrics.
 It verifies whether the tenant has accessed the Instance recently, either through the frontend (by analyzing Ingress metrics) or via SSH (using a specific SSH bastion tracker metric).
 If activity is detected, the controller postpones the check.
-If no activity is recorded for a time longer than the `InactivityTimeout`, the process of inactivity handling begins.
+If no activity is recorded for a time longer than the `StopAfterInactivity`, the process of inactivity handling begins.
 When an Instance has been marked as inactive, the controller starts sending email notifications to tenants, warning them that the Instance will be paused or deleted if they do not access it.
 The number of notifications sent is defined by the `inactiveTerminationMaxNumberOfAlerts` parameter in the Helm chart.
 Once this limit is reached, the controller takes action: **persistent Instances are paused**, while **non-persistent Instances are deleted**.
@@ -169,25 +169,29 @@ Both the controller and the email notifications can be enabled or disabled throu
 In addition, the behavior can be customized using annotations. For example, the `crownlabs.polito.it/custom-number-alerts` annotation on a Template allows overriding the default number of notifications for a specific Instance type, while the `crownlabs.polito.it/instance-inactivity-ignore` annotation, set to `True` on a Namespace completely excludes its Instances from the inactivity termination logic.
 
 #### Instance Expiration controller
+
 While the Instance Inactive Termination Controller deletes Instances when these are not used for an extended period of time, this controller (_Instance Expiration Controller_) introduces an orthogonal feature, i.e., the capability to delete an Instance when its maximum lifespan has expired, no matter if the instance has been used or not.
-Each Template defines `spec.cleanup.deleteAfterCreation` (previously `DeleteAfter`) that specifies how long an Instance can exist before it must be removed. When an Instance reaches this limit, the controller automatically deletes it.
+Each Template defines `spec.cleanup.deleteAfterCreation` (previously `DeleteAfterCreation`) that specifies how long an Instance can exist before it must be removed. When an Instance reaches this limit, the controller automatically deletes it.
 Omitting this field defaults it to `never`, meaning that Instances created from that template will be ignored by this controller.
 As with inactivity termination, this feature can be managed through Helm chart parameters: `enableInstanceExpiration` controls whether the controller is active, while `enableExpirationNotifications` enables or disables email alerts to inform tenants before deletion.
 This feature can be used when we know already that an Instance will not be needed after a given period; a possible example is the instance used to carry out an exam, which can be safely deleted when the exam has finished.
 The `crownlabs.polito.it/expiration-ignore` annotation, when set to `True`, allows to ignore all Instances in a Namespace, preventing them from being deleted due to expiration.
 
 ### Instance services public exposure
+
 The "Instance services public exposure" feature allows services running inside an Instance (for example, a web server in a VM) to be reachable from outside the cluster. Public exposure is implemented by creating a Kubernetes Service of type LoadBalancer and mapping public ports on the LoadBalancer IP 1:1 to the target ports inside the VM. MetalLB (or another LoadBalancer controller) is responsible for advertising and assigning the LoadBalancer IP to the Service.
 
 Below you will find a concise description of the reconcile flow, the assignment logic, the main implementation files for developers, and the Helm values that control behavior.
 
 #### Reconcile flow
+
 - A user updates the Instance CR (for example using `kubectl apply -f instance-spec.yaml`) or issues the request through the frontend UI.
 - The Instance controller reconciles the Instance and invokes the public-exposure enforcement (see `pkg/instctrl/publicexposure.go`). When `spec.publicExposure` is present and valid, the controller creates or updates a `Service` of type `LoadBalancer` to expose the requested port mappings.
 - The public IP and ports are allocated according to controller rules and constraints: the IP is picked from a configured pool (Helm), while target and external ports come from the `spec.publicExposure` request.
 - Once the LoadBalancer Service is created/updated, the operator sets `status.publicExposure` on the Instance and creates or removes the corresponding `NetworkPolicy` to allow traffic to the instance (`pkg/instctrl/networkpolicy.go`).
 
 #### Developer reference (implementation and useful links)
+
 - `pkg/instctrl/publicexposure.go` — entrypoint for the feature. Contains `EnforcePublicExposure`, `enforcePublicExposurePresence` and `enforcePublicExposureAbsence`, which orchestrate Service creation/update/deletion and Instance status updates.
 - `pkg/instctrl/ip_manager.go` — IP/port allocation logic. Key functions: `BuildPrioritizedIPPool`, `FindBestIPAndAssignPorts`, `UpdateUsedPortsByIP`, `tryAssignPorts`, `splitPorts`.
 - `pkg/instctrl/networkpolicy.go` — creates/removes the `NetworkPolicy` associated to an active public exposure.
@@ -195,58 +199,66 @@ Below you will find a concise description of the reconcile flow, the assignment 
 - `pkg/forge/loadbalancers.go` — helpers that build metadata, names, labels and annotations for LoadBalancer Services; labels used to filter relevant Services are defined here and some values are configurable via Helm.
 
 #### References
+
 - CRD fields( [Instance](deploy/crds/crownlabs.polito.it_instances.yaml) and [Template](deploy/crds/crownlabs.polito.it_templates.yaml)): `Instance.spec.publicExposure` and `Instance.status.publicExposure`; `Template.spec.allowPublicExposure` enables the feature per-template.
 - [Helm values](deploy/instance-operator/values.yaml) : see `configurations.publicExposure` below.
 - [Deployment template](deploy/instance-operator/templates/deployment.yaml) : the flag `--public-exposure-loadbalancer-ips-key=...` passes the annotation key.
 
 #### Assignment logic (high level)
-1) IP pool
-  The pool of available public IPs is configured via Helm and passed to the operator in `PublicExposureOpts.IPPool`. Pool entries may be CIDRs, ranges or single IPs; parsing is performed by `operators/pkg/utils/ip.go::ParseIPPool`.
 
-2) Existing services and used ports
-  Before allocating IPs/ports, the operator scans existing LoadBalancer Services (filtered using the labels from `forge.LoadBalancerServiceLabels()`) to build a `usedPortsByIP` map that records which ports are already occupied on each IP. This is implemented in `operators/pkg/instctrl/ip_manager.go::UpdateUsedPortsByIP`.
+1. IP pool
+   The pool of available public IPs is configured via Helm and passed to the operator in `PublicExposureOpts.IPPool`. Pool entries may be CIDRs, ranges or single IPs; parsing is performed by `operators/pkg/utils/ip.go::ParseIPPool`.
 
-3) Prioritization and preferences
-  `BuildPrioritizedIPPool` sorts IPs to favour reuse (reducing fragmentation). If the Instance already had a preferred IP (e.g. during updates), that IP is moved to the front by `reorderIPPoolWithPreferredIP`.
+2. Existing services and used ports
+   Before allocating IPs/ports, the operator scans existing LoadBalancer Services (filtered using the labels from `forge.LoadBalancerServiceLabels()`) to build a `usedPortsByIP` map that records which ports are already occupied on each IP. This is implemented in `operators/pkg/instctrl/ip_manager.go::UpdateUsedPortsByIP`.
 
-4) Port assignment
-  `FindBestIPAndAssignPorts` iterates the prioritized IP list, trying to allocate the requested ports (explicit or automatic). `tryAssignPorts` checks availability and builds the list of assigned ports.
+3. Prioritization and preferences
+   `BuildPrioritizedIPPool` sorts IPs to favour reuse (reducing fragmentation). If the Instance already had a preferred IP (e.g. during updates), that IP is moved to the front by `reorderIPPoolWithPreferredIP`.
 
-5) Service creation/configuration
-  When a compatible IP/port set is found, the operator creates or updates the `LoadBalancer` Service via `controllerutil.CreateOrUpdate` (see `enforcePublicExposurePresence`). The chosen IP is written using the configured annotation key (for example `metallb.universe.tf/loadBalancerIPs`) and `spec.ports` is set with the assigned mappings.
+4. Port assignment
+   `FindBestIPAndAssignPorts` iterates the prioritized IP list, trying to allocate the requested ports (explicit or automatic). `tryAssignPorts` checks availability and builds the list of assigned ports.
 
-6) Status and network policy
-  After the Service is ready, the operator updates `instance.Status.PublicExposure` with the `ExternalIP` and the assigned ports, and creates the needed `NetworkPolicy` to allow traffic to the Instance (`pkg/instctrl/networkpolicy.go`).
+5. Service creation/configuration
+   When a compatible IP/port set is found, the operator creates or updates the `LoadBalancer` Service via `controllerutil.CreateOrUpdate` (see `enforcePublicExposurePresence`). The chosen IP is written using the configured annotation key (for example `metallb.universe.tf/loadBalancerIPs`) and `spec.ports` is set with the assigned mappings.
+
+6. Status and network policy
+   After the Service is ready, the operator updates `instance.Status.PublicExposure` with the `ExternalIP` and the assigned ports, and creates the needed `NetworkPolicy` to allow traffic to the Instance (`pkg/instctrl/networkpolicy.go`).
 
 #### Helm
+
 The public exposure configuration is in the instance-operator values chart under `configurations.publicExposure`.
-  ```yaml
-  configurations:
-    publicExposure:
-    # IP pool used to assign public IPs to Services
-    ipPool:
-      - "172.18.0.240-172.18.0.249"
-      - "172.18.0.250/30"
-    # Common annotations applied to all LoadBalancers (format: key1=val1,key2=val2)
-    commonAnnotations: "metallb.universe.tf/allow-shared-ip=pe"
-    # Annotation key used to pre-assign IPs to LoadBalancers
-    loadBalancerIPsKey: "metallb.universe.tf/loadBalancerIPs"
-  ```
+
+```yaml
+configurations:
+  publicExposure:
+  # IP pool used to assign public IPs to Services
+  ipPool:
+    - "172.18.0.240-172.18.0.249"
+    - "172.18.0.250/30"
+  # Common annotations applied to all LoadBalancers (format: key1=val1,key2=val2)
+  commonAnnotations: "metallb.universe.tf/allow-shared-ip=pe"
+  # Annotation key used to pre-assign IPs to LoadBalancers
+  loadBalancerIPsKey: "metallb.universe.tf/loadBalancerIPs"
+```
 
 #### Validation and controls
+
 - Requests are validated by `ValidatePublicExposureRequest` (checks for duplicates, ranges, protocols, etc.).
 - If a request is invalid, `PublicExposure` status is set to `Error` and an explanatory message is recorded.
 
 #### Notes and operational caveats
+
 - Requirement: MetalLB (or another LoadBalancer controller that supports the used annotation mechanism) must be installed to make this feature work out-of-the-box.
 - Port-request priority: the allocator prefers to satisfy explicitly requested ports before assigning automatic/random ports. In corner cases where a user requests a specific port on an Instance that previously had that port assigned automatically, the allocator may reassign the old automatic port to the new explicit request and select a different automatic port for the previous service.
 - Enabling public exposure: the feature is available only for Instances that reference Templates with `spec.allowPublicExposure: true`.
 
 #### Run-time configuration example
+
 When a user configures a new public exposure for his VM/container, the controller automatically generates a set of YAML configurations in order to allow the system to work.
 Below is a minimal example that follows the Instance CRD schema in `deploy/crds/crownlabs.polito.it_instances.yaml`.
 
 ##### Instance spec (CRD-compliant example)
+
 ```yaml
 apiVersion: crownlabs.polito.it/v1alpha2
 kind: Instance
@@ -267,6 +279,7 @@ spec:
 ```
 
 ##### Expected status after reconcile (CRD-compliant example)
+
 ```yaml
 kind: Instance
 metadata:
@@ -295,7 +308,6 @@ The operator will also create or update the corresponding `Service` of type `Loa
 - On success or during normal processing the phase will be set to a provisioning/ready state (for example `Provisioning` while resources are being reconciled and `Ready` when fully available) and `message` will contain a short informative text.
 - On failure (for example validation errors or IP/port allocation conflicts) the phase will be set to `Error` and `message` will contain a descriptive error explaining the reason and, when possible, hints to recover.
 
-
 ## SSH bastion
 
 The SSH bastion is composed of three basic blocks:
@@ -305,24 +317,28 @@ The SSH bastion is composed of three basic blocks:
 3. `bastion-ssh-tracker`: a golang app based on Google `gopacket` that passively tracks outbound SSH connections going from the **bastion host** to the associated **target instances**, exposing them as metrics for Prometheus.
 
 ### Bastion SSH Tracker
+
 The `bastion-ssh-tracker` enables lightweight and non-intrusive monitoring of SSH activity from the bastion, complementing monitoring focused on RDP accesses coming from the ingress.
 The idea is to track each time a new SSH session is established from a user to an instance (e.g., VM), in order to monitor whether the instance is currently being used by its owner, or it is a 'stale' instance which consumes resources for no reason.
 This is done by tracking all the TCP SYN packets from the SSH bastion to any instance; when such a packet is detected, the corresponding Prometheus metric is incremented.
 
 An example of the metric exposed by the tracker is the following:
+
 ```
 bastion_ssh_connections{container="bastion-operator-tracker-sidecar", destination_ip="1.2.3.4", destination_port="22", endpoint="metrics", instance="10.244.1.195:8082", job="bastion-bastion-operator-metrics", namespace="default", pod="bastion-bastion-operator-67b688c479-dlx49", service="bastion-bastion-operator-metrics"}
 ```
+
 with its corresponding counter value, which is incremented each time a new SSH connection is established to the instance with IP `1.2.3.4`.
 
 The Bastion SSH Tracker captures raw Ethernet frames using Linux's `AF_PACKET` interface in `TPACKET_V3` mode, a memory-mapped ring buffer mechanism that allows efficient, low-overhead packet capture in user space without interfering with in-kernel networking.
 
 The tracker:
-* Attaches to a specific network interface (via `--ssh-tracker-interface`)
-* Applies a BPF filter that matches outbound TCP SYN packets on a configurable destination port (via `--ssh-tracker-port`)
-* Parses only IPv4 TCP packets with the SYN flag set to detect new SSH connections
-* Exposes Prometheus metrics labeled by destination IP
-* Leaves the original packets untouched, allowing them to pass through the kernel normally without drops or redirection
+
+- Attaches to a specific network interface (via `--ssh-tracker-interface`)
+- Applies a BPF filter that matches outbound TCP SYN packets on a configurable destination port (via `--ssh-tracker-port`)
+- Parses only IPv4 TCP packets with the SYN flag set to detect new SSH connections
+- Exposes Prometheus metrics labeled by destination IP
+- Leaves the original packets untouched, allowing them to pass through the kernel normally without drops or redirection
 
 This tracker runs as a sidecar container within the `bastion` deployment, which is needed to share the same network namespace and see the SSH traffic directly.
 The container requires more privileges to open raw sockets and apply BPF filters, but it avoids full privilege escalation. It needs in fact to run as root inside the container to access the `AF_PACKET` interface, but it drops all other capabilities apart from the required `NET_RAW` and `NET_ADMIN`.
@@ -369,7 +385,7 @@ The operator executes some actions to setup cluster and external resources to al
   - periodically, (i.e. in a range between 1 and 2 hours since the last update)
 - When performing the actions, the operator utilizes a `fail-fast:false` strategy. Hence, if an action fails (e.g. due to Keycloak being temporarily offline), the operator does not stop and tries to execute all the other independent actions.
 - PVCs for the users personal storage are all created in the same namespace, specified by the `--mydrive-pvcs-namespace` parameter of the operator, and different from the namespace of the user.
-This prevents the loss of the user data after the deletion of the user account, which removes also the namespace of the user itself and all the resources therein.
+  This prevents the loss of the user data after the deletion of the user account, which removes also the namespace of the user itself and all the resources therein.
 - The PVCs for the users personal storage have a size specified via the `--mydrive-pvcs-size` parameter, with default value `1Gi`.
 
 The actions performed by the operator are the following:
@@ -407,11 +423,13 @@ The actions performed by the operator are the following:
   - ensures that the tenant has enough resources for the instance in the workspace, using a webhook
 
 ### Keycloak integration
+
 The operator integrates with Keycloak to manage the users and roles of the CrownLabs platform.
 In order to connect to Keycloak, a dedicated Keycloak client is required, which can be created using the Keycloak admin console, and some authorization needs to be granted to the client.
 More information are available in the [dedicated page](./Keycloak.md).
 
 ### Instance quota validation
+
 The operator guarantees that a tenant does not use more resources than those made available by a workspace.
 
 Since all instances created by a tenant are placed in the same namespace regardless of the (CrownLabs) workspace they belong to, the `ResourceQuota` parameter created by the tenant operator represents only a _last resort_ global security barrier.
@@ -497,9 +515,9 @@ When `configurations.imageList` is not defined in the Helm values, the operator 
 The Image List Updater is composed of:
 
 1. **Update Method** (`(*BackgroundUpdater).Update(ctx)`) - Executes a complete update cycle across all configured registries. This method is:
-    - Called by the scheduler when periodic updates are enabled
-    - Intended to be invoked on a `BackgroundUpdater` instance for on-demand or event-triggered updates
-    - Protected against overlapping executions by the updater's concurrency controls
+   - Called by the scheduler when periodic updates are enabled
+   - Intended to be invoked on a `BackgroundUpdater` instance for on-demand or event-triggered updates
+   - Protected against overlapping executions by the updater's concurrency controls
 
 2. **Periodic Scheduler** (`StartScheduler(ctx)`) - Manages automatic updates at a configurable interval:
    - Runs inside the operator when enabled
@@ -519,6 +537,7 @@ The Image List Updater is composed of:
 ### Supported Registries
 
 The updater supports multiple registry types through pluggable Requestor implementations:
+
 - `DockerImageListRequestor`: Docker Registry HTTP API V2
 - `HarborImageListRequestor`: Harbor REST API v2
 
@@ -534,13 +553,14 @@ Each registry type is implemented as a `Requestor`, which must satisfy the follo
 type Requestor interface {
 	// Initialize sets up the requestor with authentication credentials and registry URL
 	Initialize(username, password, registryURL string) (bool, error)
-	
+
 	// GetImageList retrieves the list of images from the registry
 	GetImageList(ctx context.Context) ([]map[string]interface{}, error)
 }
 ```
 
 **Key responsibilities:**
+
 - `Initialize`: Validates credentials and prepares the requestor for API calls
 - `GetImageList`: Fetches images from the registry and returns them in a normalized format
 
@@ -560,6 +580,7 @@ type Saver interface {
 To add support for a new registry type:
 
 1. **Create a new requestor struct** in `pkg/imagelist/requestors.go`:
+
    ```go
    type MyCustomRegistryRequestor struct {
        url         string
@@ -572,18 +593,20 @@ To add support for a new registry type:
    ```
 
 2. **Implement the Requestor interface**:
+
    ```go
    func (r *MyCustomRegistryRequestor) Initialize(username, password, registryURL string) (bool, error) {
        // Validate credentials and setup
        return true, nil
    }
-   
+
    func (r *MyCustomRegistryRequestor) GetImageList(ctx context.Context) ([]map[string]interface{}, error) {
        // Query registry API and return images
    }
    ```
 
 3. **Create a constructor function**:
+
    ```go
    func NewMyCustomRegistryRequestor(log logr.Logger) *MyCustomRegistryRequestor {
        return &MyCustomRegistryRequestor{
@@ -595,6 +618,7 @@ To add support for a new registry type:
    ```
 
 4. **Update the initialization logic** in `pkg/imagelist/agent.go` to instantiate your requestor when the registry type matches:
+
    ```go
    case "mycustom":
        requestor = NewMyCustomRegistryRequestor(log)
@@ -610,14 +634,16 @@ To add support for a new registry type:
 The Image List Updater is integrated into the main operator controller and can be enabled via Helm values or command-line flags:
 
 **Via Helm values:**
+
 ```yaml
 configurations:
   imageList:
     configFile: /etc/config/registries.yaml
-    updateInterval: 300  # seconds
+    updateInterval: 300 # seconds
 ```
 
 **Via command-line flags:**
+
 ```bash
 --enable-image-list=true
 --image-list-config-file=/etc/config/registries.yaml
@@ -665,7 +691,7 @@ err := updater.Update(ctx)
 ```
 
 This enables integration with external triggers such as:
+
 - Webhook endpoints from registries notifying of new images
 - Event-based triggers from other controllers
 - On-demand API endpoints for manual updates
-

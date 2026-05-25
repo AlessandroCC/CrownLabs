@@ -59,8 +59,8 @@ type InstanceExpirationReconciler struct {
 // SetupWithManager registers a new controller for InstanceExpirationReconciler resources.
 // The controller is configured to watch for Instance resources and Template resources.
 // For the instance resources, it is configured to only reconcile instances at the creation time (to calculate the expiration time) and at the deletion time. Updates on the instance resources are ignored by this reconciler.
-// For the template resources, it is configured to reconcile instances when the template's deleteAfter field is changed. In this case, it will enqueue all the instances that are associated with that template.
-// To avoid unnecessary reconciliations, the controller avoid reconciling instances whose template's deleteAfter field is set to neverTimeoutValue, which means that the instance will never be deleted.
+// For the template resources, it is configured to reconcile instances when the template's deleteAfterCreation field is changed. In this case, it will enqueue all the instances that are associated with that template.
+// To avoid unnecessary reconciliations, the controller avoid reconciling instances whose template's deleteAfterCreation field is set to neverTimeoutValue, which means that the instance will never be deleted.
 func (r *InstanceExpirationReconciler) SetupWithManager(mgr ctrl.Manager, concurrency int) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&clv1alpha2.Instance{}, builder.WithPredicates(instanceTriggered)).
@@ -109,19 +109,19 @@ func (r *InstanceExpirationReconciler) Reconcile(ctx context.Context, req ctrl.R
 	tracer.Step("instance, template and tenant retrieved")
 
 	// Get lifespan from template's deleteAfterCreation field
-	deleteAfter := template.Spec.Cleanup.DeleteAfterCreation
+	deleteAfterCreation := template.Spec.Cleanup.DeleteAfterCreation
 
 	ctx, _ = pkgcontext.TemplateInto(ctx, template)
 	ctx, _ = pkgcontext.InstanceInto(ctx, instance)
 	ctx, _ = pkgcontext.TenantInto(ctx, tenant)
 
 	// If the template's deleteAfterCreation field is set to neverTimeoutValue, never delete
-	if deleteAfter == NeverTimeoutValue {
+	if deleteAfterCreation == NeverTimeoutValue {
 		dbgLog.Info("Instance marked as never expiring", "instance", instance.GetName(), "namespace", instance.GetNamespace())
 		return ctrl.Result{}, nil
 	}
 
-	remainingTime, err := r.CheckInstanceExpiration(ctx, deleteAfter)
+	remainingTime, err := r.CheckInstanceExpiration(ctx, deleteAfterCreation)
 	if err != nil {
 		log.Error(err, "failed to check instance expiration")
 		return ctrl.Result{}, err
@@ -219,16 +219,16 @@ func (r *InstanceExpirationReconciler) ShouldTerminateInstance(ctx context.Conte
 }
 
 // CheckInstanceExpiration returns the remaining time before expiration as a time.Duration.
-func (r *InstanceExpirationReconciler) CheckInstanceExpiration(ctx context.Context, deleteAfter string) (time.Duration, error) {
+func (r *InstanceExpirationReconciler) CheckInstanceExpiration(ctx context.Context, deleteAfterCreation string) (time.Duration, error) {
 	log := ctrl.LoggerFrom(ctx).WithName("get-remaining-time")
 	instance := pkgcontext.InstanceFrom(ctx)
 	if instance == nil {
 		return 0, fmt.Errorf("instance not found in context")
 	}
 
-	expirationDuration, err := ParseDurationWithDays(ctx, deleteAfter)
+	expirationDuration, err := ParseDurationWithDays(ctx, deleteAfterCreation)
 	if err != nil {
-		log.Error(err, "failed to parse deleteAfter duration")
+		log.Error(err, "failed to parse deleteAfterCreation duration")
 		return 0, err
 	}
 

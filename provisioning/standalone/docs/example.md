@@ -55,27 +55,27 @@ Create a file called **template.yaml** and **copy/paste** the following code:
 apiVersion: crownlabs.polito.it/v1alpha2
 kind: Template
 metadata:
-    name: echotest
-    namespace: workspace-sid # a workspace where you have the permission to create templates
+  name: echotest
+  namespace: workspace-sid # a workspace where you have the permission to create templates
 spec:
-    deleteAfter: never
-    inactivityTimeout: 14d
-    description: An http server used for testing
-    environmentList:
-        - environmentType: Standalone
-          guiEnabled: true
-          image: YOUR_DOCKERHUB_USERNAME/echotest
-          mode: Standard
-          name: default
-          persistent: false
-          resources:
-              cpu: 1
-              memory: 1000M
-              reservedCPUPercentage: 50
-          rewriteURL: false
-    prettyName: Echo HTTP Server
-    workspace.crownlabs.polito.it/WorkspaceRef:
-        name: sid # choosen workspace name
+  deleteAfterCreation: never
+  stopAfterInactivity: 14d
+  description: An http server used for testing
+  environmentList:
+    - environmentType: Standalone
+      guiEnabled: true
+      image: YOUR_DOCKERHUB_USERNAME/echotest
+      mode: Standard
+      name: default
+      persistent: false
+      resources:
+        cpu: 1
+        memory: 1000M
+        reservedCPUPercentage: 50
+      rewriteURL: false
+  prettyName: Echo HTTP Server
+  workspace.crownlabs.polito.it/WorkspaceRef:
+    name: sid # choosen workspace name
 ```
 
 And **apply** it with `kubectl apply -f template.yaml`

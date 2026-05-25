@@ -134,17 +134,17 @@ func (r *InstanceInactiveTerminationReconciler) Reconcile(ctx context.Context, r
 		return r.handlePoweredOffInstance(ctx, instance, tracer)
 	}
 
-	inactivityTimeout := template.Spec.Cleanup.StopAfterInactivity
+	stopAfterInactivity := template.Spec.Cleanup.StopAfterInactivity
 	// If set to neverTimeoutValue, return without rescheduling
-	if inactivityTimeout == NeverTimeoutValue {
+	if stopAfterInactivity == NeverTimeoutValue {
 		dbgLog.Info("Instance marked as never stop", "name", instance.GetName(), "namespace", instance.GetNamespace())
 		return ctrl.Result{}, nil
 	}
 
-	inactivityTimeoutDuration, err := ParseDurationWithDays(ctx, inactivityTimeout)
+	inactivityTimeoutDuration, err := ParseDurationWithDays(ctx, stopAfterInactivity)
 	if err != nil {
-		log.Error(err, "failed to parse deleteAfter duration")
-		return ctrl.Result{}, fmt.Errorf("failed to parse inactivityTimeout duration %s: %w", inactivityTimeout, err)
+		log.Error(err, "failed to parse deleteAfterCreation duration")
+		return ctrl.Result{}, fmt.Errorf("failed to parse stopAfterInactivity duration %s: %w", stopAfterInactivity, err)
 	}
 
 	tracer.Step("labels checked")
@@ -927,25 +927,25 @@ func (r *InstanceInactiveTerminationReconciler) GetRemainingInactivityDestructio
 		return 0, false, fmt.Errorf("template not found in context")
 	}
 
-	destroyAfterInactivity := template.Spec.Cleanup.DeleteAfterInactivity
-	if destroyAfterInactivity == NeverTimeoutValue || destroyAfterInactivity == "" {
+	deleteAfterInactivity := template.Spec.Cleanup.DeleteAfterInactivity
+	if deleteAfterInactivity == NeverTimeoutValue || deleteAfterInactivity == "" {
 		return 0, false, nil
 	}
 
-	destroyAfterInactivityDuration, err := ParseDurationWithDays(ctx, destroyAfterInactivity)
+	destroyAfterInactivityDuration, err := ParseDurationWithDays(ctx, deleteAfterInactivity)
 	if err != nil {
-		return 0, false, fmt.Errorf("failed to parse destroyAfterInactivity duration %s: %w", destroyAfterInactivity, err)
+		return 0, false, fmt.Errorf("failed to parse deleteAfterInactivity duration %s: %w", deleteAfterInactivity, err)
 	}
 	poweredOffTimeStr := instance.Annotations[forge.LastPoweredOffTimestampAnnotation]
 	if poweredOffTimeStr == "" {
 		return 0, false, nil // No powered-off timestamp, nothing to calculate
 	}
 
-	// Store the destroyAfterInactivity value as an annotation for validation/visibility
+	// Store the deleteAfterInactivity value as an annotation for validation/visibility
 	if instance.Annotations == nil {
 		instance.Annotations = make(map[string]string)
 	}
-	instance.Annotations["crownlabs.polito.it/destroy-after-inactivity"] = destroyAfterInactivity
+	instance.Annotations["crownlabs.polito.it/destroy-after-inactivity"] = deleteAfterInactivity
 
 	poweredOffTime, err := time.Parse(time.RFC3339, poweredOffTimeStr)
 	if err != nil {

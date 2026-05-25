@@ -353,7 +353,7 @@ var _ = Describe("Instautoctrl-inactivity", func() {
 
 	Context("Testing default and custom inactivity value", func() {
 
-		It("Should succeed: the Persistent instance get the default InactivityTimeout value and it is not stopped", func() {
+		It("Should succeed: the Persistent instance get the default StopAfterInactivity value and it is not stopped", func() {
 			mockProm.EXPECT().
 				IsPrometheusHealthy(gomock.Any(), gomock.Any()).
 				Return(true, nil).
@@ -390,7 +390,7 @@ var _ = Describe("Instautoctrl-inactivity", func() {
 			templateLookupKey := types.NamespacedName{Name: currentInstance.Spec.Template.Name, Namespace: WorkingNamespace}
 			doesEventuallyExists(ctx, templateLookupKey, currentTemplate, BeTrue(), timeout, interval, k8sClient)
 
-			By("Checking the InactivityTimeout field is the default one")
+			By("Checking the StopAfterInactivity field is the default one")
 			currentInactivityTimeout := currentTemplate.Spec.Cleanup.StopAfterInactivity
 			defaultInactivityTimeout := instautoctrl.NeverTimeoutValue
 			Expect(currentInactivityTimeout).To(Equal(defaultInactivityTimeout))
@@ -529,7 +529,7 @@ var _ = Describe("Instautoctrl-inactivity", func() {
 				return k8sClient.Update(ctx, currentInstance)
 			}, timeout, interval).Should(Succeed())
 
-			By("Updating template with destroyAfterInactivity")
+			By("Updating template with deleteAfterInactivity")
 			currentTemplate := &crownlabsv1alpha2.Template{}
 			templateLookupKey := types.NamespacedName{Name: persistentTemplateName2, Namespace: WorkingNamespace}
 			Eventually(func() error {
@@ -563,7 +563,7 @@ var _ = Describe("Instautoctrl-inactivity", func() {
 				return k8sClient.Update(ctx, currentInstance)
 			}, timeout, interval).Should(Succeed())
 
-			By("Updating template with destroyAfterInactivity")
+			By("Updating template with deleteAfterInactivity")
 			currentTemplate := &crownlabsv1alpha2.Template{}
 			templateLookupKey := types.NamespacedName{Name: persistentTemplateName, Namespace: WorkingNamespace}
 			Eventually(func() error {
